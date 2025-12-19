@@ -26,17 +26,20 @@ const config: Config = {
         'electric-purple': '#6366F1',
       },
       fontFamily: {
-        sans: ['var(--font-spline-sans)', 'sans-serif'],
-        display: ['var(--font-spline-sans)', 'sans-serif'],
+        sans: ['var(--font-manrope)', 'sans-serif'],
+        display: ['var(--font-manrope)', 'sans-serif'],
         mono: ['monospace', 'ui-monospace', 'SFMono-Regular'],
       },
       borderRadius: {
-        DEFAULT: '1rem',
-        lg: '2rem',
-        xl: '3rem',
+        // Your specific pixel overrides
+        DEFAULT: '4px',    // .rounded
+        md: '6px',         // .rounded-md (Bridge between 4px and 8px)
+        lg: '8px',         // .rounded-lg
+        xl: '12px',        // .rounded-xl
+        '2xl': '16px',     // .rounded-2xl (Keeping a larger option just in case)
         full: '9999px',
       },
-       backdropBlur: {
+      backdropBlur: {
         xs: '2px',
       },
     },

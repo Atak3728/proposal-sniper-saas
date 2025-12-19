@@ -1,3 +1,5 @@
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
 const PricingPage = () => {
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased selection:bg-primary selection:text-white">
@@ -17,11 +19,13 @@ const PricingPage = () => {
                 <a className="text-slate-600 dark:text-gray-300 hover:text-primary dark:hover:text-white text-sm font-medium transition-colors" href="#">Testimonials</a>
                 <a className="text-slate-600 dark:text-gray-300 hover:text-primary dark:hover:text-white text-sm font-medium transition-colors" href="#">Login</a>
               </div>
+              <ThemeToggle />
               <button className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-5 bg-primary hover:bg-primary/90 transition-colors text-white text-sm font-bold shadow-lg shadow-primary/20">
                 <span className="truncate">Get Started</span>
               </button>
             </div>
-            <div className="md:hidden flex items-center text-white">
+            <div className="md:hidden flex items-center gap-4 text-white">
+              <ThemeToggle />
               <span className="material-symbols-outlined">menu</span>
             </div>
           </div>

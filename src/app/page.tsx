@@ -1,3 +1,5 @@
+import { ThemeToggle } from "../components/ui/ThemeToggle";
+
 const LandingPage = () => {
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden text-slate-900 dark:text-white transition-colors duration-200">
@@ -17,6 +19,7 @@ const LandingPage = () => {
                 <a className="text-sm font-medium hover:text-primary transition-colors" href="/pricing">Pricing</a>
               </nav>
               <div className="flex items-center gap-4">
+                <ThemeToggle />
                 <button className="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-transparent border border-gray-300 dark:border-border-dark text-sm font-bold hover:bg-gray-100 dark:hover:bg-card-dark transition-colors">
                   Log In
                 </button>
