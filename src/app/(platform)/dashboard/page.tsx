@@ -1,4 +1,52 @@
+"use client";
+
+import { useState } from 'react';
+
 const DashboardPage = () => {
+  // State for the inputs
+  const [tone, setTone] = useState('Professional');
+  const [prompt, setPrompt] = useState('');
+  
+  // State for the AI Output
+  const [completion, setCompletion] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // The "Manual" Generation Function (Exactly like your Test Page)
+  const generateProposal = async () => {
+    if (!prompt) return;
+    
+    setIsLoading(true);
+    setCompletion(""); // Clear previous output
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        body: JSON.stringify({ prompt, tone }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to generate");
+      }
+
+      // Stream Reader (The magic part)
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        
+        // Append new text to the existing completion
+        setCompletion((prev) => prev + text);
+      }
+    } catch (error) {
+      console.error("Generation failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-full w-full font-display">
       <aside className="w-80 h-full flex flex-col border-r border-[rgba(0,0,0,0.08)] dark:border-glass-border bg-white dark:bg-[#13161c] relative z-20 flex-shrink-0 transition-colors duration-300">
@@ -12,10 +60,14 @@ const DashboardPage = () => {
           <div className="flex flex-col gap-2">
             <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">AI Model</label>
             <div className="relative group">
-              <select className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-glass-border text-gray-900 dark:text-white text-sm rounded-lg h-12 px-4 appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer">
-                <option value="gpt-4o">GPT-4o (Recommended)</option>
-                <option value="claude-3">Claude 3.5 Sonnet</option>
-                <option value="mistral">Mistral Large</option>
+              <select
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-glass-border text-gray-900 dark:text-white text-sm rounded-lg h-12 px-4 appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer"
+              >
+                <option value="Professional">Professional</option>
+                <option value="Casual">Casual</option>
+                <option value="Urgent">Urgent</option>
               </select>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                 <span className="material-symbols-outlined">expand_more</span>
@@ -25,24 +77,21 @@ const DashboardPage = () => {
           <div className="flex flex-col gap-2">
             <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">Tone</label>
             <div className="flex p-1 bg-gray-50 dark:bg-[#1c1f26] rounded-full border border-gray-200 dark:border-glass-border">
-              <label className="flex-1 cursor-pointer relative">
-                <input defaultChecked className="peer sr-only" name="tone" type="radio" value="Professional" />
-                <div className="w-full py-2 px-3 text-center text-xs font-medium text-gray-500 rounded-full peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all">
-                  Professional
-                </div>
-              </label>
-              <label className="flex-1 cursor-pointer relative">
-                <input className="peer sr-only" name="tone" type="radio" value="Casual" />
-                <div className="w-full py-2 px-3 text-center text-xs font-medium text-gray-500 rounded-full peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all">
-                  Casual
-                </div>
-              </label>
-              <label className="flex-1 cursor-pointer relative">
-                <input className="peer sr-only" name="tone" type="radio" value="Urgent" />
-                <div className="w-full py-2 px-3 text-center text-xs font-medium text-gray-500 rounded-full peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all">
-                  Urgent
-                </div>
-              </label>
+              {['Professional', 'Casual', 'Urgent'].map((t) => (
+                <label key={t} className="flex-1 cursor-pointer relative">
+                  <input
+                    className="peer sr-only"
+                    name="tone"
+                    type="radio"
+                    value={t}
+                    checked={tone === t}
+                    onChange={() => setTone(t)}
+                  />
+                  <div className="w-full py-2 px-3 text-center text-xs font-medium text-gray-500 rounded-full peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all">
+                    {t}
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
           <div className="flex flex-col gap-4">
@@ -128,7 +177,10 @@ const DashboardPage = () => {
                 <span className="material-symbols-outlined text-primary text-[20px]">code</span>
                 <h2 className="text-gray-900 dark:text-white font-medium text-sm tracking-wide">SOURCE JOB DESCRIPTION</h2>
               </div>
-              <button className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 transition-colors">
+              <button 
+                onClick={() => setPrompt('')} 
+                className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 transition-colors"
+              >
                 <span className="material-symbols-outlined text-[16px]">delete</span> Clear
               </button>
             </div>
@@ -152,14 +204,25 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">7</span>
                   <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">8</span>
                 </div>
-                <textarea className="flex-1 bg-transparent border-none text-gray-800 dark:text-gray-300 font-mono text-sm p-4 resize-none focus:ring-0 focus:outline-none leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-700 h-full w-full" placeholder={`// Paste the job description here...
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="flex-1 bg-transparent border-none text-gray-800 dark:text-gray-300 font-mono text-sm p-4 resize-none focus:ring-0 focus:outline-none leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-700 h-full w-full"
+                  placeholder={`// Paste the job description here...
 // The AI will analyze requirements and generate a tailored proposal.
-Looking for a Senior Frontend Developer...`}></textarea>
+Looking for a Senior Frontend Developer...`}
+                ></textarea>
               </div>
               <div className="absolute bottom-6 right-6 z-20">
-                <button className="bg-primary text-white font-bold text-sm px-6 py-3 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:scale-105 transition-all flex items-center gap-2 group/btn">
-                  <span className="material-symbols-outlined transition-transform group-hover/btn:rotate-12">bolt</span>
-                  GENERATE PROPOSAL
+                <button
+                  onClick={generateProposal}
+                  disabled={isLoading || !prompt.trim()}
+                  className="bg-primary text-white font-bold text-sm px-6 py-3 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:scale-105 transition-all flex items-center gap-2 group/btn disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className={`material-symbols-outlined transition-transform ${isLoading ? 'animate-spin' : 'group-hover/btn:rotate-12'}`}>
+                    {isLoading ? 'progress_activity' : 'bolt'}
+                  </span>
+                  {isLoading ? 'SNIPPING...' : 'GENERATE PROPOSAL'}
                 </button>
               </div>
             </div>
@@ -176,41 +239,32 @@ Looking for a Senior Frontend Developer...`}></textarea>
             </div>
             <div className="flex-1 rounded-2xl bg-white/50 dark:bg-glass-panel border border-white/20 dark:border-glass-border shadow-xl dark:shadow-2xl overflow-hidden flex flex-col relative backdrop-blur-sm">
               <div className="absolute top-4 right-4 z-20 flex gap-2">
-                <button className="h-9 w-9 rounded-full bg-white dark:bg-[#1c1f26] hover:bg-gray-100 dark:hover:bg-[#2a2e38] border border-gray-200 dark:border-glass-border flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" title="Regenerate">
-                  <span className="material-symbols-outlined text-[18px]">refresh</span>
+                <button 
+                  onClick={generateProposal} 
+                  disabled={isLoading}
+                  className="h-9 w-9 rounded-full bg-white dark:bg-[#1c1f26] hover:bg-gray-100 dark:hover:bg-[#2a2e38] border border-gray-200 dark:border-glass-border flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" 
+                  title="Regenerate"
+                >
+                  <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
                 </button>
-                <button className="h-9 w-9 rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black border border-transparent flex items-center justify-center shadow-lg transition-colors group" title="Copy to Clipboard">
+                <button 
+                  onClick={() => navigator.clipboard.writeText(completion)}
+                  className="h-9 w-9 rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black border border-transparent flex items-center justify-center shadow-lg transition-colors group" 
+                  title="Copy to Clipboard"
+                >
                   <span className="material-symbols-outlined text-[18px]">content_copy</span>
                 </button>
               </div>
               <div className="p-8 h-full overflow-y-auto">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <p className="text-gray-500 dark:text-gray-400 text-xs mb-6 uppercase tracking-widest font-mono">Subject: Application for Senior Frontend Developer Role</p>
-                  <p className="text-gray-700 dark:text-gray-200 leading-7">
-                    Hi [Hiring Manager Name],
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-200 leading-7 mt-4">
-                    I was excited to come across your opening for a Senior Frontend Developer. With over 6 years of experience specializing in React and modern UI architectures, I believe I can bring immediate value to your engineering team.
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-200 leading-7 mt-4">
-                    In your description, you mentioned a need for someone who can optimize rendering performance for high-traffic dashboards. In my previous role at <span className="bg-electric-purple/10 dark:bg-electric-purple/20 text-electric-purple px-1 rounded">TechFlow Inc.</span>, I successfully reduced initial load times by 40% by implementing code-splitting strategies and optimizing React Context usage.
-                  </p>
-                  <div className="my-6 pl-4 border-l-2 border-primary/50 bg-primary/5 p-4 rounded-r-lg">
-                    <h4 className="text-primary text-sm font-bold mb-2">Key Competencies Aligned with Your Stack:</h4>
-                    <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 marker:text-primary">
-                      <li>React / Next.js expert level</li>
-                      <li>Tailwind CSS architecture</li>
-                      <li>TypeScript strict typing enforcement</li>
-                      <li>GraphQL & Apollo Client</li>
-                    </ul>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-200 leading-7 mt-4">
-                    I'd love to chat more about how I can help your team ship faster and more reliably. Are you available for a quick 15-minute intro call this Thursday or Friday?
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-200 leading-7 mt-6">
-                    Best regards,<br />
-                    John Doe
-                  </p>
+                  {completion ? (
+                    <div className="whitespace-pre-wrap">{completion}</div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 opacity-50">
+                      <span className="material-symbols-outlined text-4xl mb-2">auto_awesome</span>
+                      <p>Paste a job description to generate a proposal...</p>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#0E1117]/80 to-transparent pointer-events-none"></div>
