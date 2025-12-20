@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'brain'>('general');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
   const [extractedSkills, setExtractedSkills] = useState("");
   const [extractedBio, setExtractedBio] = useState("Senior Full Stack Developer with 8+ years of experience in React, Node.js, and Cloud Architecture. Proven track record of delivering scalable SaaS solutions and leading remote teams. Expert in converting complex business requirements into high-performing technical implementations.");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const containerClasses = "bg-white border-gray-200 shadow-sm dark:bg-glass-panel dark:border-glass-border dark:backdrop-blur-sm dark:shadow-2xl rounded-xl border transition-colors";
+
+  // Hide toast after 3 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -32,9 +43,9 @@ const SettingsPage = () => {
       const data = await response.json();
       setExtractedBio(data.bio);
       setExtractedSkills(data.skills);
+      setShowToast(true); // Trigger success toast
     } catch (error) {
       console.error("Error uploading file:", error);
-      // Ideally show a toast here
       alert("Failed to analyze resume. Please try again.");
     } finally {
       setIsAnalyzing(false);
@@ -49,10 +60,17 @@ const SettingsPage = () => {
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
     }
@@ -63,7 +81,20 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background-light dark:bg-background-dark">
+    <div className="flex h-full w-full overflow-hidden bg-background-light dark:bg-background-dark relative">
+      {/* Success Toast */}
+      {showToast && (
+        <div className="fixed top-24 right-10 z-50 flex items-center gap-3 bg-white dark:bg-[#1b1f27] border border-green-500/20 shadow-xl rounded-lg px-4 py-3 animate-in slide-in-from-right-10 fade-in duration-300">
+          <div className="bg-green-500/10 p-1.5 rounded-full flex items-center justify-center">
+            <span className="material-symbols-outlined text-green-500 text-xl">check</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Brain Updated</p>
+            <p className="text-xs text-gray-500 dark:text-[#ab9cba]">Your AI context is now active.</p>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 flex flex-col h-full overflow-hidden relative transition-colors duration-300">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
         <header className="h-16 border-b border-[rgba(0,0,0,0.08)] dark:border-border-dark flex items-center justify-between px-6 md:px-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md z-10 sticky top-0 transition-colors">
@@ -93,8 +124,8 @@ const SettingsPage = () => {
               <button
                 onClick={() => setActiveTab('general')}
                 className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'general'
-                    ? 'bg-white dark:bg-glass-panel text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-glass-panel text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white'
                   }`}
               >
                 General & Billing
@@ -102,8 +133,8 @@ const SettingsPage = () => {
               <button
                 onClick={() => setActiveTab('brain')}
                 className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'brain'
-                    ? 'bg-white dark:bg-glass-panel text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-glass-panel text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white'
                   }`}
               >
                 AI Brain
@@ -302,24 +333,31 @@ const SettingsPage = () => {
                         onChange={onFileChange}
                       />
                       <div
-                        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group ${isAnalyzing
-                            ? 'border-primary bg-primary/5'
+                        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isAnalyzing
+                          ? 'border-transparent bg-gray-50 dark:bg-white/5 pointer-events-none'
+                          : isDragging
+                            ? 'border-electric-purple bg-electric-purple/5 scale-[1.02]'
                             : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5'
                           }`}
                         onClick={triggerFileInput}
                         onDragOver={onDragOver}
+                        onDragLeave={onDragLeave}
                         onDrop={onDrop}
                       >
                         {isAnalyzing ? (
-                          <>
-                            <span className="material-symbols-outlined text-4xl text-primary animate-spin mb-2">autorenew</span>
+                          <div className="py-2">
+                            <span className="material-symbols-outlined text-4xl text-primary animate-spin mb-3">progress_activity</span>
                             <p className="text-sm font-medium text-primary">Analyzing Resume...</p>
-                            <p className="text-xs text-primary/70 mt-1">Extracting skills and bio</p>
-                          </>
+                            <p className="text-xs text-primary/70 mt-1">Extracting skills & bio</p>
+                          </div>
                         ) : (
                           <>
-                            <span className="material-symbols-outlined text-4xl text-gray-400 group-hover:text-primary transition-colors mb-2">cloud_upload</span>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Upload Resume (PDF)</p>
+                            <span className={`material-symbols-outlined text-4xl transition-colors mb-2 ${isDragging ? 'text-electric-purple' : 'text-gray-400 group-hover:text-primary'}`}>
+                              cloud_upload
+                            </span>
+                            <p className={`text-sm font-medium transition-colors ${isDragging ? 'text-electric-purple' : 'text-gray-700 dark:text-gray-300'}`}>
+                              {isDragging ? 'Drop to Upload' : 'Upload Resume (PDF)'}
+                            </p>
                             <p className="text-xs text-gray-400 mt-1">Drag & drop or click to browse</p>
                           </>
                         )}
@@ -336,7 +374,7 @@ const SettingsPage = () => {
                       ></textarea>
                       <div className="absolute top-8 right-2">
                         <span className="bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-500/20 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-50 animate-pulse"></span>
                           Ready
                         </span>
                       </div>
