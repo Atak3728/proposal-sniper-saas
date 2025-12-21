@@ -20,23 +20,23 @@ export async function POST(req: Request) {
 
     // 2. Parse PDF (Using pdf2json wrapped in a Promise)
     console.log("Parsing PDF with pdf2json...");
-    
+
     const resumeText = await new Promise<string>((resolve, reject) => {
-        const pdfParser = new PDFParser(null, 1); // 1 = Text content only
+      const pdfParser = new PDFParser(null, 1); // 1 = Text content only
 
-        pdfParser.on("pdfParser_dataError", (errData: any) => {
-            console.error("PDF Parser Error:", errData.parserError);
-            reject(new Error(errData.parserError));
-        });
+      pdfParser.on("pdfParser_dataError", (errData: any) => {
+        console.error("PDF Parser Error:", errData.parserError);
+        reject(new Error(errData.parserError));
+      });
 
-        pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
-            // Extract raw text from the messy JSON structure
-            const rawText = pdfParser.getRawTextContent();
-            resolve(rawText);
-        });
+      pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
+        // Extract raw text from the messy JSON structure
+        const rawText = pdfParser.getRawTextContent();
+        resolve(rawText);
+      });
 
-        // Feed the buffer
-        pdfParser.parseBuffer(buffer);
+      // Feed the buffer
+      pdfParser.parseBuffer(buffer);
     });
 
     console.log("PDF Parsed. Text length:", resumeText.length);
@@ -46,10 +46,19 @@ export async function POST(req: Request) {
     const result = await generateObject({
       model: google('gemini-2.5-flash-lite-preview-09-2025'),
       schema: z.object({
-        bio: z.string().describe("A professional first-person bio summary (max 80 words)."),
+        bio: z.string().describe("A professional first-person bio summary (150-200 words). Highly detailed."),
         skills: z.string().describe("A comma-separated list of the top 5 hard technical skills."),
       }),
-      prompt: `Analyze this resume text and extract the summary and skills. Ignore any messy formatting artifacts:\n\n${resumeText.slice(0, 15000)}`,
+      prompt: `Analyze this resume text and extract the summary and skills. Ignore any messy formatting artifacts.
+      
+      For the 'bio':
+      - Write a detailed first-person professional summary.
+      - Do NOT be brief. Expand on the user's roles, specific achievements, and technical expertise.
+      - Target length: 150-200 words.
+      - Tone: Confident and expert.
+      
+      Resume Context:
+      ${resumeText.slice(0, 15000)}`,
     });
 
     return Response.json(result.object);

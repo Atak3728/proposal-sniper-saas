@@ -9,7 +9,17 @@ const SettingsPage = () => {
   const [showToast, setShowToast] = useState(false);
 
   const [extractedSkills, setExtractedSkills] = useState("");
-  const [extractedBio, setExtractedBio] = useState("Senior Full Stack Developer with 8+ years of experience in React, Node.js, and Cloud Architecture. Proven track record of delivering scalable SaaS solutions and leading remote teams. Expert in converting complex business requirements into high-performing technical implementations.");
+  const [extractedBio, setExtractedBio] = useState("");
+
+  // Load from LocalStorage on Mount
+  useEffect(() => {
+    const savedIdentity = localStorage.getItem('sniper_identity');
+    if (savedIdentity) {
+      const { bio, skills } = JSON.parse(savedIdentity);
+      setExtractedBio(bio || "");
+      setExtractedSkills(skills || "");
+    }
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +53,7 @@ const SettingsPage = () => {
       const data = await response.json();
       setExtractedBio(data.bio);
       setExtractedSkills(data.skills);
+      localStorage.setItem('sniper_identity', JSON.stringify({ bio: data.bio, skills: data.skills }));
       setShowToast(true); // Trigger success toast
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -262,20 +273,27 @@ const SettingsPage = () => {
 
             {/* TAB 2: AI Brain */}
             {activeTab === 'brain' && (
-              <div className="flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Left Column: Controls (35%) */}
-                <div className={`md:w-[35%] flex flex-col gap-6`}>
-                  <section className={`${containerClasses} p-5 md:p-6 h-full`}>
+              <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-280px)] min-h-[600px]">
+                {/* 1. Global Font Import for JetBrains Mono */}
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+                  .font-jetbrains { font-family: 'JetBrains Mono', monospace; }
+                `}} />
+
+                {/* Left Column: Core Settings (Span 4) */}
+                <div className="col-span-12 lg:col-span-4 h-full flex flex-col gap-6">
+                  <section className={`${containerClasses} p-6 h-full flex flex-col`}>
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
                       <span className="material-symbols-outlined text-primary">psychology</span>
                       Core Settings
                     </h2>
 
-                    <div className="space-y-6">
+                    <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                       <label className="flex flex-col gap-2">
                         <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Tone of Voice</span>
                         <div className="relative">
-                          <select className="w-full appearance-none bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all">
+                          <select className="w-full appearance-none bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all font-medium">
                             <option>Professional & Confident</option>
                             <option>Friendly & Approachable</option>
                             <option>Direct & Concise</option>
@@ -287,7 +305,7 @@ const SettingsPage = () => {
                       <label className="flex flex-col gap-2">
                         <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Top Skills</span>
                         <input
-                          className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                          className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium"
                           type="text"
                           placeholder="React, Node, Copywriting..."
                           value={extractedSkills}
@@ -298,33 +316,38 @@ const SettingsPage = () => {
 
                       <div className="space-y-3">
                         <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Portfolio Links</span>
-                        <input
-                          className="w-full bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 mb-2"
-                          type="url"
-                          placeholder="https://github.com/username"
-                        />
-                        <input
-                          className="w-full bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
-                          type="url"
-                          placeholder="https://dribbble.com/username"
-                        />
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg px-3 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                          <span className="material-symbols-outlined text-gray-400 text-[18px]">link</span>
+                          <input
+                            className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                            type="url"
+                            placeholder="https://github.com/username"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg px-3 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                          <span className="material-symbols-outlined text-gray-400 text-[18px]">language</span>
+                          <input
+                            className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                            type="url"
+                            placeholder="https://dribbble.com/username"
+                          />
+                        </div>
                       </div>
                     </div>
                   </section>
                 </div>
 
-                {/* Right Column: The Extractor (65%) */}
-                <div className="md:w-[65%]">
-                  <section className={`${containerClasses} p-5 md:p-6 h-full flex flex-col`}>
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">bolt</span>
-                        Context Extractor
-                      </h2>
-                      <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-primary/20">Auto-generated</span>
-                    </div>
+                {/* Right Column: Context Extractor (Span 8) */}
+                <div className="col-span-12 lg:col-span-8 h-full">
+                  <section className={`${containerClasses} p-0 h-full flex flex-col overflow-hidden bg-[#0f111a] border-gray-800 shadow-2xl`}>
 
-                    <div className="mb-6">
+                    {/* Header: Upload Control & Status */}
+                    <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0f111a]">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-500">terminal</span>
+                        <span className="text-sm font-medium text-gray-400">Context Extractor</span>
+                      </div>
+
                       <input
                         type="file"
                         accept=".pdf"
@@ -332,51 +355,81 @@ const SettingsPage = () => {
                         ref={fileInputRef}
                         onChange={onFileChange}
                       />
-                      <div
-                        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isAnalyzing
-                          ? 'border-transparent bg-gray-50 dark:bg-white/5 pointer-events-none'
-                          : isDragging
-                            ? 'border-electric-purple bg-electric-purple/5 scale-[1.02]'
-                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5'
-                          }`}
+
+                      <button
                         onClick={triggerFileInput}
-                        onDragOver={onDragOver}
-                        onDragLeave={onDragLeave}
-                        onDrop={onDrop}
+                        disabled={isAnalyzing}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs text-gray-400 hover:text-white transition-all group"
                       >
                         {isAnalyzing ? (
-                          <div className="py-2">
-                            <span className="material-symbols-outlined text-4xl text-primary animate-spin mb-3">progress_activity</span>
-                            <p className="text-sm font-medium text-primary">Analyzing Resume...</p>
-                            <p className="text-xs text-primary/70 mt-1">Extracting skills & bio</p>
-                          </div>
+                          <>
+                            <span className="material-symbols-outlined text-[14px] animate-spin text-primary">progress_activity</span>
+                            <span className="text-primary">Extracting...</span>
+                          </>
                         ) : (
                           <>
-                            <span className={`material-symbols-outlined text-4xl transition-colors mb-2 ${isDragging ? 'text-electric-purple' : 'text-gray-400 group-hover:text-primary'}`}>
-                              cloud_upload
-                            </span>
-                            <p className={`text-sm font-medium transition-colors ${isDragging ? 'text-electric-purple' : 'text-gray-700 dark:text-gray-300'}`}>
-                              {isDragging ? 'Drop to Upload' : 'Upload Resume (PDF)'}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">Drag & drop or click to browse</p>
+                            <span className="material-symbols-outlined text-[14px] group-hover:text-primary transition-colors">upload_file</span>
+                            <span>Upload PDF Resume</span>
                           </>
                         )}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 relative group w-full bg-[#0f111a]"
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                    >
+                      {/* Drag Overlay */}
+                      {isDragging && (
+                        <div className="absolute inset-0 z-50 bg-primary/10 backdrop-blur-sm border-2 border-primary border-dashed m-4 rounded-xl flex items-center justify-center">
+                          <div className="flex flex-col items-center gap-2 animate-bounce">
+                            <span className="material-symbols-outlined text-primary text-4xl">cloud_upload</span>
+                            <span className="text-primary font-bold">Drop Resume to Extract</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* The Editor Input */}
+                      <textarea
+                        className="w-full h-full bg-[#0f111a] text-[#6b7280] font-jetbrains text-sm p-6 outline-none resize-none leading-relaxed placeholder:text-gray-700 custom-scrollbar"
+                        placeholder={`// NO CONTEXT LOADED
+// Upload a PDF resume to initialize the neural extraction layer...
+// Or type manually to override context parameters.
+
+> Waiting for input...`}
+                        value={extractedBio}
+                        onChange={(e) => setExtractedBio(e.target.value)}
+                        spellCheck="false"
+                      ></textarea>
+
+                      {/* Local Save Bio Button (Hidden by default, visible on hover) */}
+                      <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                          onClick={() => {
+                            localStorage.setItem('sniper_identity', JSON.stringify({ bio: extractedBio, skills: extractedSkills }));
+                            setShowToast(true);
+                          }}
+                          className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded shadow-lg shadow-primary/20 flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all border border-white/10"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">save</span>
+                          SAVE BIO TO MEMORY
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-2 relative">
-                      <label className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Extracted Professional Bio</label>
-                      <textarea
-                        className="flex-1 w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg p-4 text-sm font-mono focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all resize-none h-80"
-                        placeholder="Your professional bio will appear here after analyzing your resume..."
-                        value={extractedBio}
-                        onChange={(e) => setExtractedBio(e.target.value)}
-                      ></textarea>
-                      <div className="absolute top-8 right-2">
-                        <span className="bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-500/20 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-50 animate-pulse"></span>
-                          Ready
+                    {/* Status Footer Bar */}
+                    <div className="h-8 bg-[#0b0d12] border-t border-white/5 flex items-center justify-between px-4 text-[10px] text-gray-600 font-jetbrains select-none">
+                      <div className="flex items-center gap-4">
+                        <span>UTF-8</span>
+                        <span>{extractedBio.length} CHARS</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${extractedBio ? 'bg-green-500' : 'bg-gray-600'}`}></span>
+                          {extractedBio ? 'ACTIVE' : 'IDLE'}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>Ln {extractedBio.split('\n').length}, Col 1</span>
                       </div>
                     </div>
                   </section>

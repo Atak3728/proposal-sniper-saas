@@ -4,12 +4,15 @@ import { streamText } from 'ai';
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { prompt, tone } = await req.json();
+  const { prompt, tone, userBio, userSkills } = await req.json();
 
-// ... inside POST function
   const fullPrompt = `
     ROLE: You are an expert freelance copywriter. You write professional, concise, and high-converting proposals.
     
+    MY PROFILE:
+    - Bio: ${userBio || "Generic Freelancer"}
+    - Skills: ${userSkills || "General Skills"}
+
     STRICT FORMATTING RULES:
     1. NO Markdown (no **, no ##, no bullet points *). Write in clean, plain text paragraphs only.
     2. NO Placeholders (no [Insert Name], no [Date]). 
@@ -22,10 +25,12 @@ export async function POST(req: Request) {
     
     TONE: ${tone || 'Professional'}
     
+    INSTRUCTION: Write a proposal for the Job Description below. USE MY PROFILE to prove fit.
+    
     JOB DESCRIPTION:
     ${prompt}
   `;
-// ... rest of code
+  // ... rest of code
 
   const result = await streamText({
     // Use the model that gave you the 200 OK

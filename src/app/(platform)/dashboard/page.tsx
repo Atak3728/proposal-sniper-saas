@@ -1,27 +1,67 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import HistoryDrawer from '@/components/HistoryDrawer';
 
 const DashboardPage = () => {
   // State for the inputs
   const [tone, setTone] = useState('Professional');
   const [prompt, setPrompt] = useState('');
-  
+
+  // New State for Model
+  const [model, setModel] = useState('GPT-4o');
+
   // State for the AI Output
   const [completion, setCompletion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // History State
+  const [history, setHistory] = useState<any[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Load History on Mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('sniper_history');
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  // Save to History Helper
+  const saveToHistory = (promptText: string, content: string) => {
+    const newEntry = {
+      id: Date.now(),
+      title: promptText.split(' ').slice(0, 5).join(' ') + "...",
+      date: new Date().toLocaleTimeString(),
+      fullDate: new Date().toLocaleDateString(),
+      prompt: promptText,
+      content: content
+    };
+
+    const updatedHistory = [newEntry, ...history].slice(0, 10); // Keep top 10
+    setHistory(updatedHistory);
+    localStorage.setItem('sniper_history', JSON.stringify(updatedHistory));
+  };
+
+  const loadHistoryItem = (item: any) => {
+    setPrompt(item.prompt);
+    setCompletion(item.content);
+  };
+
   // The "Manual" Generation Function (Exactly like your Test Page)
   const generateProposal = async () => {
     if (!prompt) return;
-    
+
     setIsLoading(true);
     setCompletion(""); // Clear previous output
+    let fullContent = "";
 
     try {
+      const identity = JSON.parse(localStorage.getItem('sniper_identity') || '{}');
+
       const response = await fetch("/api/generate", {
         method: "POST",
-        body: JSON.stringify({ prompt, tone }),
+        body: JSON.stringify({ prompt, tone, userBio: identity.bio, userSkills: identity.skills }),
       });
 
       if (!response.ok || !response.body) {
@@ -36,10 +76,13 @@ const DashboardPage = () => {
         const { done, value } = await reader.read();
         if (done) break;
         const text = decoder.decode(value, { stream: true });
-        
-        // Append new text to the existing completion
+
+        fullContent += text;
         setCompletion((prev) => prev + text);
       }
+
+      // Save to History after completion
+      saveToHistory(prompt, fullContent);
     } catch (error) {
       console.error("Generation failed", error);
     } finally {
@@ -48,230 +91,199 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex h-full w-full font-display">
-      <aside className="w-80 h-full flex flex-col border-r border-[rgba(0,0,0,0.08)] dark:border-glass-border bg-white dark:bg-[#13161c] relative z-20 flex-shrink-0 transition-colors duration-300">
-        <div className="p-6 border-b border-[rgba(0,0,0,0.08)] dark:border-glass-border h-[88px] flex items-center">
-          <div className="flex flex-col justify-center">
-            <h1 className="text-gray-900 dark:text-white text-lg font-bold leading-tight">Proposal Sniper</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-xs font-normal">v2.1.0 • Pro Edition</p>
+    <div className="flex flex-col h-full w-full font-display bg-[#0f111a] text-gray-300">
+
+      {/* 1. TOP TOOLBAR - Modern, Glassy, Horizontal Controls */}
+      <header className="h-16 flex items-center justify-between px-6 border-b border-gray-800 bg-[#0f111a]/80 backdrop-blur-md z-20 flex-shrink-0">
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col">
+            <h1 className="text-white text-lg font-bold leading-none tracking-tight">Workspace</h1>
+            <p className="text-gray-500 text-[10px] font-medium pt-1">Drafting Proposal v2.4</p>
           </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">AI Model</label>
+
+          <div className="h-8 w-px bg-white/10 mx-2"></div>
+
+          {/* Model Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Model</span>
             <div className="relative group">
               <select
-                value={tone}
-                onChange={(e) => setTone(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-glass-border text-gray-900 dark:text-white text-sm rounded-lg h-12 px-4 appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="bg-[#1c1f26] border border-white/10 text-white text-xs font-semibold rounded-lg h-8 pl-3 pr-8 appearance-none cursor-pointer hover:border-primary/50 focus:outline-none transition-all"
               >
-                <option value="Professional">Professional</option>
-                <option value="Casual">Casual</option>
-                <option value="Urgent">Urgent</option>
+                <option>GPT-4o</option>
+                <option>Claude 3.5 Sonnet</option>
+                <option>Gemini Pro 1.5</option>
               </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                <span className="material-symbols-outlined">expand_more</span>
-              </div>
+              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none text-gray-500">expand_more</span>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">Tone</label>
-            <div className="flex p-1 bg-gray-50 dark:bg-[#1c1f26] rounded-full border border-gray-200 dark:border-glass-border">
+
+          {/* Tone Selector pills */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Tone</span>
+            <div className="flex bg-[#1c1f26] p-1 rounded-lg border border-white/10">
               {['Professional', 'Casual', 'Urgent'].map((t) => (
-                <label key={t} className="flex-1 cursor-pointer relative">
-                  <input
-                    className="peer sr-only"
-                    name="tone"
-                    type="radio"
-                    value={t}
-                    checked={tone === t}
-                    onChange={() => setTone(t)}
-                  />
-                  <div className="w-full py-2 px-3 text-center text-xs font-medium text-gray-500 rounded-full peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all">
-                    {t}
-                  </div>
-                </label>
+                <button
+                  key={t}
+                  onClick={() => setTone(t)}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${tone === t
+                    ? 'bg-[#2a2e38] text-primary shadow-sm border border-white/5'
+                    : 'text-gray-500 hover:text-white'
+                    }`}
+                >
+                  {t}
+                </button>
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-4">
-            <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">Parameters</label>
-            <div className="flex items-center justify-between group cursor-pointer">
-              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-white transition-colors">Include Portfolio</span>
-              <div className="w-10 h-6 bg-primary rounded-full relative shadow-inner cursor-pointer">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"></div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between group cursor-pointer">
-              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-white transition-colors">Max Length</span>
-              <span className="text-xs text-primary font-mono bg-primary/10 px-2 py-1 rounded">200 words</span>
-            </div>
-          </div>
-          <div className="mt-auto pt-6 border-t border-[rgba(0,0,0,0.08)] dark:border-glass-border">
-            <label className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4 block">Recent History</label>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
-                <span className="material-symbols-outlined text-gray-500 group-hover:text-primary text-[20px]">history</span>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">Senior React Developer...</span>
-                  <span className="text-xs text-gray-500">2 mins ago</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
-                <span className="material-symbols-outlined text-gray-500 group-hover:text-primary text-[20px]">history</span>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">UX/UI Designer for SaaS</span>
-                  <span className="text-xs text-gray-500">1 hour ago</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-        <div className="p-4 border-t border-[rgba(0,0,0,0.08)] dark:border-glass-border bg-gray-50 dark:bg-[#0E1117] flex flex-col gap-4">
-          <details className="relative group/menu">
-            <summary className="flex items-center gap-3 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors list-none select-none">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-electric-purple to-purple-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                JD
-              </div>
-              <div className="flex flex-col flex-1 text-left">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">John Doe</p>
-                <p className="text-xs text-gray-500">Freelancer Plan</p>
-              </div>
-              <span className="material-symbols-outlined text-gray-500 group-open/menu:rotate-180 transition-transform">expand_less</span>
-            </summary>
-            <div className="absolute bottom-[105%] left-0 w-full mb-1 bg-white dark:bg-[#1c1f26] border border-gray-200 dark:border-glass-border rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col p-1 z-50 animate-in slide-in-from-bottom-2 fade-in duration-200">
-              <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors" href="#">
-                <span className="material-symbols-outlined text-[18px] text-gray-500">dashboard</span>
-                <span className="text-xs font-medium">Dashboard</span>
-              </a>
-              <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors" href="#">
-                <span className="material-symbols-outlined text-[18px] text-gray-500">manage_accounts</span>
-                <span className="text-xs font-medium">Account Settings</span>
-              </a>
-              <div className="h-px bg-gray-200 dark:bg-white/5 my-1 mx-2"></div>
-              <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" href="#">
-                <span className="material-symbols-outlined text-[18px] text-gray-500 hover:text-red-500 dark:hover:text-red-400">logout</span>
-                <span className="text-xs font-medium">Sign Out</span>
-              </a>
-            </div>
-          </details>
-          <button className="w-full bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_auto] hover:bg-right transition-all duration-500 text-white py-2.5 px-4 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_25px_rgba(99,102,241,0.6)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 group border border-white/10">
-            <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform text-white">diamond</span>
-            <span className="text-xs font-bold tracking-wider text-white">UPGRADE TO PRO</span>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+            className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${isHistoryOpen
+                ? 'text-indigo-400 bg-indigo-500/10'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+            title="View History"
+          >
+            <span className="material-symbols-outlined text-[20px]">history</span>
           </button>
-          <div className="flex items-center justify-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity cursor-help mt-1" title="Connection Secured with 256-bit Encryption">
-            <span className="material-symbols-outlined text-green-500 text-[14px]">lock</span>
-            <span className="text-[10px] text-gray-500 font-mono tracking-tight">SECURE API CONNECTED</span>
-          </div>
+          <button className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center justify-center" title="Templates">
+            <span className="material-symbols-outlined text-[20px]">grid_view</span>
+          </button>
+
+          <div className="h-6 w-px bg-white/10 mx-1"></div>
+
+          <button className="bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 text-xs font-bold px-4 py-2 rounded-lg transition-all">
+            Export
+          </button>
         </div>
-      </aside>
-      <main className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-[#0E1117] relative">
-        <div className="absolute inset-0 z-0">
-          <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center opacity-5 dark:opacity-20 blur-sm"></div>
-          <div className="absolute inset-0 bg-background-light dark:bg-[#0E1117]/95"></div>
-        </div>
-        <div className="relative z-10 flex h-full p-6 gap-6">
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">code</span>
-                <h2 className="text-gray-900 dark:text-white font-medium text-sm tracking-wide">SOURCE JOB DESCRIPTION</h2>
+      </header>
+
+      {/* 2. MAIN WORKSPACE - 2 Cards Layout */}
+      <main className="flex-1 overflow-hidden relative p-6 flex gap-6">
+
+        {/* LEFT CARD: SOURCE */}
+        <div className="flex-1 bg-[#13151C] border border-gray-800 rounded-xl flex flex-col relative overflow-hidden shadow-2xl">
+          {/* Display Header */}
+          <div className="h-12 bg-[#1c1f26] border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5 mr-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/50"></div>
               </div>
-              <button 
-                onClick={() => setPrompt('')} 
-                className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 transition-colors"
+              <span className="material-symbols-outlined text-primary text-[16px]">code</span>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Source Job Description</span>
+            </div>
+            <button onClick={() => setPrompt('')} className="text-[10px] text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors">
+              <span className="material-symbols-outlined text-[14px]">delete</span> CLEAR
+            </button>
+          </div>
+
+          {/* Editor Area */}
+          <div className="flex-1 relative flex flex-col group">
+            <div className="flex-1 flex relative">
+              {/* Line Numbers */}
+              <div className="w-12 bg-[#161821] border-r border-gray-800 pt-6 text-right pr-3 flex flex-col gap-1 select-none flex-shrink-0">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                  <span key={n} className="text-xs text-gray-600 font-mono">{n}</span>
+                ))}
+              </div>
+
+              {/* Text Input */}
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="flex-1 h-full w-full bg-transparent border-none text-gray-300 font-mono text-sm p-6 resize-none focus:ring-0 focus:outline-none leading-relaxed placeholder:text-gray-600 custom-scrollbar"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                placeholder={`// PASTE JOB DESCRIPTION HERE...
+// 
+// The AI will analyze the requirements and match them
+// with your portfolio to create a winning proposal.`}
+              ></textarea>
+            </div>
+
+            {/* Sticky Action Footer */}
+            <div className="h-20 bg-[#13151C]/95 backdrop-blur-sm border-t border-gray-800 flex items-center px-6 gap-4 flex-shrink-0 relative z-10 transition-all">
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-500">Creativity</span>
+                <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="w-2/3 h-full bg-primary/50"></div>
+                </div>
+              </div>
+
+              <button
+                onClick={generateProposal}
+                disabled={isLoading || !prompt.trim()}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm px-8 py-3 rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] transition-all flex items-center gap-2 group/btn disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none"
               >
-                <span className="material-symbols-outlined text-[16px]">delete</span> Clear
+                <span className={`material-symbols-outlined transition-transform ${isLoading ? 'animate-spin' : 'group-hover/btn:rotate-12'}`}>
+                  {isLoading ? 'progress_activity' : 'bolt'}
+                </span>
+                {isLoading ? 'GENERATING...' : 'GENERATE PROPOSAL'}
               </button>
             </div>
-            <div className="flex-1 rounded-2xl bg-white dark:bg-[#13161c] border border-gray-200 dark:border-glass-border shadow-xl dark:shadow-2xl overflow-hidden flex flex-col relative group transition-colors duration-300">
-              <div className="h-10 bg-gray-50 dark:bg-[#1c1f26] border-b border-gray-200 dark:border-glass-border flex items-center px-4 gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
-                </div>
-                <span className="ml-4 text-xs text-gray-500 font-mono">job_description.txt</span>
-              </div>
-              <div className="flex-1 relative flex">
-                <div className="w-12 bg-gray-50 dark:bg-[#1c1f26] border-r border-gray-200 dark:border-glass-border pt-4 text-right pr-3 flex flex-col gap-1 select-none">
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">1</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">2</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">3</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">4</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">5</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">6</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">7</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-600 font-mono">8</span>
-                </div>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="flex-1 bg-transparent border-none text-gray-800 dark:text-gray-300 font-mono text-sm p-4 resize-none focus:ring-0 focus:outline-none leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-700 h-full w-full"
-                  placeholder={`// Paste the job description here...
-// The AI will analyze requirements and generate a tailored proposal.
-Looking for a Senior Frontend Developer...`}
-                ></textarea>
-              </div>
-              <div className="absolute bottom-6 right-6 z-20">
-                <button
-                  onClick={generateProposal}
-                  disabled={isLoading || !prompt.trim()}
-                  className="bg-primary text-white font-bold text-sm px-6 py-3 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:scale-105 transition-all flex items-center gap-2 group/btn disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className={`material-symbols-outlined transition-transform ${isLoading ? 'animate-spin' : 'group-hover/btn:rotate-12'}`}>
-                    {isLoading ? 'progress_activity' : 'bolt'}
-                  </span>
-                  {isLoading ? 'SNIPPING...' : 'GENERATE PROPOSAL'}
-                </button>
-              </div>
+          </div>
+        </div>
+
+        {/* RIGHT CARD: OUTPUT */}
+        <div className="flex-1 bg-[#13151C] border border-gray-800 rounded-xl flex flex-col relative overflow-hidden shadow-2xl">
+          {/* Display Header */}
+          <div className="h-12 bg-[#1c1f26] border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-electric-purple text-[16px]">auto_awesome</span>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Generated Output</span>
+              {completion && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20 ml-2">Success</span>}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={generateProposal}
+                className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
+                title="Regenerate"
+              >
+                <span className="material-symbols-outlined text-[18px]">refresh</span>
+              </button>
+              <button
+                onClick={() => navigator.clipboard.writeText(completion)}
+                className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
+                title="Copy"
+              >
+                <span className="material-symbols-outlined text-[18px]">content_copy</span>
+              </button>
             </div>
           </div>
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-electric-purple text-[20px]">auto_awesome</span>
-                <h2 className="text-gray-900 dark:text-white font-medium text-sm tracking-wide">GENERATED PROPOSAL</h2>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-xs px-2 py-1 rounded bg-electric-purple/10 text-electric-purple border border-electric-purple/20">Draft v1</span>
-              </div>
-            </div>
-            <div className="flex-1 rounded-2xl bg-white/50 dark:bg-glass-panel border border-white/20 dark:border-glass-border shadow-xl dark:shadow-2xl overflow-hidden flex flex-col relative backdrop-blur-sm">
-              <div className="absolute top-4 right-4 z-20 flex gap-2">
-                <button 
-                  onClick={generateProposal} 
-                  disabled={isLoading}
-                  className="h-9 w-9 rounded-full bg-white dark:bg-[#1c1f26] hover:bg-gray-100 dark:hover:bg-[#2a2e38] border border-gray-200 dark:border-glass-border flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" 
-                  title="Regenerate"
-                >
-                  <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
-                </button>
-                <button 
-                  onClick={() => navigator.clipboard.writeText(completion)}
-                  className="h-9 w-9 rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black border border-transparent flex items-center justify-center shadow-lg transition-colors group" 
-                  title="Copy to Clipboard"
-                >
-                  <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                </button>
-              </div>
-              <div className="p-8 h-full overflow-y-auto">
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  {completion ? (
-                    <div className="whitespace-pre-wrap">{completion}</div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 opacity-50">
-                      <span className="material-symbols-outlined text-4xl mb-2">auto_awesome</span>
-                      <p>Paste a job description to generate a proposal...</p>
-                    </div>
-                  )}
+
+          {/* Output Area */}
+          <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-[#13151C]">
+            <div className="prose prose-sm max-w-none prose-invert">
+              {completion ? (
+                <div className="whitespace-pre-wrap font-medium text-gray-300 leading-7">{completion}</div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[50vh] text-gray-600 select-none">
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/5">
+                    <span className="material-symbols-outlined text-3xl opacity-50">auto_awesome</span>
+                  </div>
+                  <p className="font-medium text-sm">Ready to generate</p>
+                  <p className="text-xs opacity-50 mt-1">Output will appear here</p>
                 </div>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#0E1117]/80 to-transparent pointer-events-none"></div>
+              )}
             </div>
           </div>
         </div>
+
       </main>
+
+      {/* History Slide-Over */}
+      <HistoryDrawer
+        open={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={history}
+        onLoad={loadHistoryItem}
+      />
     </div>
   );
 };
