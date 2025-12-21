@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import HistoryDrawer from '@/components/HistoryDrawer';
+import HistoryDrawer, { HistoryItem } from '@/components/HistoryDrawer';
+import SourceEditor from '@/app/components/SourceEditor';
 
 const DashboardPage = () => {
+  const router = useRouter();
   // State for the inputs
   const [tone, setTone] = useState('Professional');
   const [prompt, setPrompt] = useState('');
@@ -17,7 +20,7 @@ const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // History State
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Toast State
@@ -47,29 +50,40 @@ const DashboardPage = () => {
   useEffect(() => {
     const savedHistory = localStorage.getItem('sniper_history');
     if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
+      try {
+        const parsed = JSON.parse(savedHistory);
+        // Simple validation or migration if needed, but for now just set it
+        setHistory(parsed);
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
     }
   }, []);
 
   // Save to History Helper
-  const saveToHistory = (promptText: string, content: string) => {
-    const newEntry = {
-      id: Date.now(),
-      title: promptText.split(' ').slice(0, 5).join(' ') + "...",
-      date: new Date().toLocaleTimeString(),
-      fullDate: new Date().toLocaleDateString(),
-      prompt: promptText,
-      content: content
+  const saveToHistory = (sourceText: string, generatedText: string) => {
+    const newEntry: HistoryItem = {
+      id: Date.now().toString(),
+      sourceText: sourceText,
+      generatedText: generatedText,
+      timestamp: Date.now(),
+      preview: sourceText.slice(0, 60) + (sourceText.length > 60 ? '...' : '')
     };
 
-    const updatedHistory = [newEntry, ...history].slice(0, 10); // Keep top 10
+    const updatedHistory = [newEntry, ...history].slice(0, 20); // Keep top 20
     setHistory(updatedHistory);
     localStorage.setItem('sniper_history', JSON.stringify(updatedHistory));
   };
 
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('sniper_history');
+  };
+
   const loadHistoryItem = (item: any) => {
-    setPrompt(item.prompt);
-    setCompletion(item.content);
+    // Handle both new (sourceText/generatedText) and legacy (prompt/content) formats
+    setPrompt(item.sourceText || item.prompt || "");
+    setCompletion(item.generatedText || item.content || "");
   };
 
   // The "Manual" Generation Function (Exactly like your Test Page)
@@ -185,15 +199,15 @@ const DashboardPage = () => {
           >
             <span className="material-symbols-outlined text-[20px]">history</span>
           </button>
-          <div className="h-6 w-px bg-white/10 mx-1"></div>
-
           <button
-            onClick={() => router.push('/templates')} // Changed to router.push
+            onClick={() => router.push('/templates')}
             className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center justify-center"
             title="Templates"
           >
             <span className="material-symbols-outlined text-[20px]">grid_view</span>
           </button>
+
+          <div className="h-6 w-px bg-white/10 mx-1"></div>
 
           <button className="bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 text-xs font-bold px-4 py-2 rounded-lg transition-all">
             Export
@@ -225,24 +239,15 @@ const DashboardPage = () => {
           {/* Editor Area */}
           <div className="flex-1 relative flex flex-col group">
             <div className="flex-1 flex relative">
-              {/* Line Numbers */}
-              <div className="w-12 bg-[#161821] border-r border-gray-800 pt-6 text-right pr-3 flex flex-col gap-1 select-none flex-shrink-0">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                  <span key={n} className="text-xs text-gray-600 font-mono">{n}</span>
-                ))}
-              </div>
-
-              {/* Text Input */}
-              <textarea
+              {/* Text Input -> Now SourceEditor */}
+              <SourceEditor
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="flex-1 h-full w-full bg-transparent border-none text-gray-300 font-mono text-sm p-6 resize-none focus:ring-0 focus:outline-none leading-relaxed placeholder:text-gray-600 custom-scrollbar"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                placeholder={`// PASTE JOB DESCRIPTION HERE...
+                onChange={setPrompt}
+                placeholder={`// PASTE JOB DESCRIPTION OR USE A TEMPLATE...
 // 
-// The AI will analyze the requirements and match them
-// with your portfolio to create a winning proposal.`}
-              ></textarea>
+// [CLIENT_NAME] will be highlighted
+// [PROJECT_GOAL] will be highlighted`}
+              />
             </div>
 
             {/* Sticky Action Footer */}
@@ -328,6 +333,7 @@ const DashboardPage = () => {
         onClose={() => setIsHistoryOpen(false)}
         history={history}
         onLoad={loadHistoryItem}
+        onClear={clearHistory}
       />
     </div>
   );
