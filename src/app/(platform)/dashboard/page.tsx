@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import HistoryDrawer from '@/components/HistoryDrawer';
 
 const DashboardPage = () => {
@@ -18,6 +19,29 @@ const DashboardPage = () => {
   // History State
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Toast State
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Checks for Templates Drafts on Mount
+  useEffect(() => {
+    const draft = localStorage.getItem('proposal_draft');
+    if (draft) {
+      setPrompt(draft);
+      setToastMessage('✨ Template Loaded');
+      setShowToast(true);
+      localStorage.removeItem('proposal_draft');
+    }
+  }, []);
+
+  // Hide toast after 3 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   // Load History on Mount
   useEffect(() => {
@@ -91,7 +115,17 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full font-display bg-[#0f111a] text-gray-300">
+    <div className="flex flex-col h-full w-full font-display bg-[#0f111a] text-gray-300 relative">
+
+      {/* Success Toast */}
+      {showToast && (
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-3 bg-[#1c1f26] border border-indigo-500/20 shadow-xl rounded-lg px-4 py-3 animate-in slide-in-from-right-10 fade-in duration-300">
+          <div className="bg-indigo-500/10 p-1.5 rounded-full flex items-center justify-center">
+            <span className="material-symbols-outlined text-indigo-400 text-lg">auto_awesome</span>
+          </div>
+          <p className="text-sm font-medium text-white">{toastMessage}</p>
+        </div>
+      )}
 
       {/* 1. TOP TOOLBAR - Modern, Glassy, Horizontal Controls */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-gray-800 bg-[#0f111a]/80 backdrop-blur-md z-20 flex-shrink-0">
@@ -144,18 +178,22 @@ const DashboardPage = () => {
           <button
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${isHistoryOpen
-                ? 'text-indigo-400 bg-indigo-500/10'
-                : 'text-gray-400 hover:text-white hover:bg-white/10'
+              ? 'text-indigo-400 bg-indigo-500/10'
+              : 'text-gray-400 hover:text-white hover:bg-white/10'
               }`}
             title="View History"
           >
             <span className="material-symbols-outlined text-[20px]">history</span>
           </button>
-          <button className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center justify-center" title="Templates">
+          <div className="h-6 w-px bg-white/10 mx-1"></div>
+
+          <button
+            onClick={() => router.push('/templates')} // Changed to router.push
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center justify-center"
+            title="Templates"
+          >
             <span className="material-symbols-outlined text-[20px]">grid_view</span>
           </button>
-
-          <div className="h-6 w-px bg-white/10 mx-1"></div>
 
           <button className="bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 text-xs font-bold px-4 py-2 rounded-lg transition-all">
             Export
@@ -259,9 +297,16 @@ const DashboardPage = () => {
 
           {/* Output Area */}
           <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-[#13151C]">
-            <div className="prose prose-sm max-w-none prose-invert">
-              {completion ? (
-                <div className="whitespace-pre-wrap font-medium text-gray-300 leading-7">{completion}</div>
+            <div className="prose prose-sm max-w-none prose-invert font-medium text-gray-300 leading-7">
+              {isLoading && !completion ? (
+                <div className="flex items-center gap-3 animate-pulse text-gray-500 py-4">
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-200"></div>
+                  <span className="text-xs tracking-wider font-mono">THINKING...</span>
+                </div>
+              ) : completion ? (
+                <ReactMarkdown>{completion}</ReactMarkdown>
               ) : (
                 <div className="flex flex-col items-center justify-center h-[50vh] text-gray-600 select-none">
                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/5">
