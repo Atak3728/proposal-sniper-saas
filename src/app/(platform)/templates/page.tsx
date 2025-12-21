@@ -12,8 +12,8 @@ const TEMPLATES = [
         description: 'Perfect for Upwork, Fiverr, or direct client pitches. Focuses on solution and capabilities.',
         icon: Briefcase,
         badge: 'Popular',
-        color: 'text-indigo-400',
-        bg: 'bg-indigo-500/10',
+        color: 'text-indigo-500 dark:text-indigo-400',
+        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
         content: `// FREELANCE PROPOSAL FOR [CLIENT_NAME]
 
 Hi [CLIENT_NAME],
@@ -40,8 +40,8 @@ Best,
         description: 'Short, punchy, and value-driven. Best for LinkedIn DMs or cold emails.',
         icon: Zap,
         badge: 'Short',
-        color: 'text-yellow-400',
-        bg: 'bg-yellow-500/10',
+        color: 'text-yellow-600 dark:text-yellow-400',
+        bg: 'bg-yellow-50 dark:bg-yellow-500/10',
         content: `// COLD OUTREACH TO [PROSPECT_NAME]
 
 Subject: Quick idea for [COMPANY_NAME]...
@@ -63,8 +63,8 @@ Cheers,
         description: 'Detailed, polite, and structured. Use this for corporate clients or agencies.',
         icon: Building2,
         badge: 'Corporate',
-        color: 'text-blue-400',
-        bg: 'bg-blue-500/10',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50 dark:bg-blue-500/10',
         content: `// RFP RESPONSE FOR [COMPANY_NAME]
 
 Dear Hiring Manager,
@@ -103,12 +103,12 @@ const TemplatesPage = () => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full p-8 font-display bg-[#0f111a] overflow-y-auto">
+        <div className="flex flex-col h-full w-full p-8 font-display bg-gray-50 dark:bg-[#0f111a] overflow-y-auto transition-colors duration-300">
             <div className="max-w-7xl mx-auto w-full">
                 {/* Header */}
                 <div className="mb-10">
-                    <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Proposal Templates</h1>
-                    <p className="text-gray-400 text-lg">Jumpstart your workflow with battle-tested structures.</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Proposal Templates</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg">Jumpstart your workflow with battle-tested structures.</p>
                 </div>
 
                 {/* Grid */}
@@ -117,27 +117,27 @@ const TemplatesPage = () => {
                         <div
                             key={template.id}
                             onClick={() => handleUseTemplate(template.content)}
-                            className="group relative bg-[#13151C] border border-gray-800 rounded-xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] hover:-translate-y-1"
+                            className="group relative bg-white dark:bg-[#13151C] border border-gray-200 dark:border-gray-800 rounded-xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-lg dark:hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] hover:-translate-y-1"
                         >
                             <div className="flex justify-between items-start mb-6">
                                 <div className={clsx("p-3 rounded-lg", template.bg, template.color)}>
                                     <template.icon size={28} />
                                 </div>
                                 {template.badge && (
-                                    <span className="bg-gray-800 border border-gray-700 text-gray-300 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                    <span className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
                                         {template.badge}
                                     </span>
                                 )}
                             </div>
 
-                            <h3 className="text-white text-xl font-semibold mb-2 group-hover:text-indigo-400 transition-colors">
+                            <h3 className="text-gray-900 dark:text-white text-xl font-semibold mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                 {template.title}
                             </h3>
-                            <p className="text-sm text-gray-400 leading-relaxed mb-6">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
                                 {template.description}
                             </p>
 
-                            <div className="flex items-center text-xs font-bold text-gray-500 group-hover:text-indigo-400 transition-colors gap-2 mt-auto">
+                            <div className="flex items-center text-xs font-bold text-gray-400 dark:text-gray-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors gap-2 mt-auto">
                                 <span>USE TEMPLATE</span>
                                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                             </div>

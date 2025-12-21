@@ -28,7 +28,7 @@ const SourceEditor = ({ value, onChange, placeholder }: SourceEditorProps) => {
     const highlight = (code: string) => {
         return Prism.highlight(code, Prism.languages.proposal, 'proposal')
             .split('\n')
-            .map((line, i) => `<span class="line-number text-gray-700 select-none mr-4 text-xs font-mono inline-block w-4 text-right">${i + 1}</span>${line}`)
+            .map((line, i) => `<span class="line-number text-gray-400 dark:text-gray-700 select-none mr-4 text-xs font-mono inline-block w-4 text-right">${i + 1}</span>${line}`)
             .join('\n');
     };
 
@@ -40,10 +40,18 @@ const SourceEditor = ({ value, onChange, placeholder }: SourceEditorProps) => {
             color: #6b7280 !important; /* text-gray-500 */
             font-style: italic;
           }
+          
+          /* Default (Light Mode) */
           .token.token-placeholder {
-            color: #818cf8 !important; /* text-indigo-400 */
+            color: #4f46e5 !important; /* text-indigo-600 */
             font-weight: bold;
           }
+
+          /* Dark Mode Override */
+          :global(.dark) .token.token-placeholder {
+            color: #818cf8 !important; /* text-indigo-400 */
+          }
+
           /* Override Editor styles to match our design */
           .prism-editor-textarea { 
               outline: none !important;
@@ -56,7 +64,7 @@ const SourceEditor = ({ value, onChange, placeholder }: SourceEditorProps) => {
                 highlight={code => Prism.highlight(code, Prism.languages.proposal, 'proposal')}
                 padding={24}
                 textareaClassName="focus:outline-none"
-                className="font-mono text-gray-300 min-h-full"
+                className="font-mono text-gray-900 dark:text-gray-300 min-h-full"
                 style={{
                     fontFamily: '"JetBrains Mono", monospace',
                     fontSize: 14,

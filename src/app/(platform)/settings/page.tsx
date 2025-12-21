@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Crown } from "lucide-react";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'brain'>('general');
@@ -92,7 +93,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background-light dark:bg-background-dark relative">
+    <div className="flex h-full w-full overflow-hidden bg-gray-50 dark:bg-background-dark relative transition-colors duration-300">
       {/* Success Toast */}
       {showToast && (
         <div className="fixed top-24 right-10 z-50 flex items-center gap-3 bg-white dark:bg-[#1b1f27] border border-green-500/20 shadow-xl rounded-lg px-4 py-3 animate-in slide-in-from-right-10 fade-in duration-300">
@@ -108,7 +109,7 @@ const SettingsPage = () => {
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative transition-colors duration-300">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-        <header className="h-16 border-b border-[rgba(0,0,0,0.08)] dark:border-border-dark flex items-center justify-between px-6 md:px-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md z-10 sticky top-0 transition-colors">
+        <header className="h-16 border-b border-gray-200 dark:border-border-dark flex items-center justify-between px-6 md:px-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md z-10 sticky top-0 transition-colors">
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-[#ab9cba]">
             <span>Settings</span>
             <span className="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -131,7 +132,7 @@ const SettingsPage = () => {
             </div>
 
             {/* Tab Navigation (Segmented Control) */}
-            <div className="bg-gray-100 dark:bg-white/5 p-1 rounded-lg inline-flex w-full md:w-auto">
+            <div className="bg-gray-100 dark:bg-white/5 p-1 rounded-lg inline-flex w-full md:w-auto border border-gray-200 dark:border-transparent">
               <button
                 onClick={() => setActiveTab('general')}
                 className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'general'
@@ -155,103 +156,94 @@ const SettingsPage = () => {
             {/* TAB 1: General & Billing */}
             {activeTab === 'general' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <section className={`${containerClasses} p-5 md:p-6`}>
+                {/* Profile Section */}
+                <section className={`${containerClasses} p-5 md:p-6 bg-white dark:bg-[#13151C] border-gray-200 dark:border-gray-800`}>
                   <div className="flex flex-col md:flex-row gap-6 items-center">
                     <div className="flex flex-col items-center gap-3 min-w-[100px]">
                       <div className="relative group cursor-pointer">
-                        <div
-                          className="size-20 rounded-full bg-cover bg-center border border-gray-200 dark:border-border-dark group-hover:border-primary transition-colors"
-                          style={{ backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuC0XtAqNbgUa8HOOZzij_cq4qrO4WTGRheNZFknpiEbtfGh93RmvaRLtw0B6thZbH5sP280xCIFTQDdHhc9wsQ3p7hu4v1f2zW2qLY5A-BxlrKOxMOB1bOhuL2fTDTAVNBwxkN1JWldQRtdOFRTumbreukbFJBuDeOIKZt6OzjgGkMgBtDo3KXvLkGaCv6ZqSI1ESiHcdzhm8Eoye20Tg5PB9xFMHtJUlgCoNTgbedOa8CyfZ6xuhYJikXWGYBDp-NyFuAnhhcOLR2l")` }}
-                        ></div>
+                        <div className="size-24 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-[#1c1f26] shadow-md dark:shadow-none">
+                          AM
+                        </div>
                         <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="material-symbols-outlined text-white text-sm">photo_camera</span>
                         </div>
                       </div>
-                      <button className="text-[10px] font-bold text-primary hover:text-primary-hover uppercase tracking-wider">Edit Photo</button>
+                      <button className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors">Change Photo</button>
                     </div>
-                    <div className="flex-1 w-full">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                          <span className="material-symbols-outlined text-primary text-[20px]">badge</span>
-                          Profile Information
-                        </h2>
+
+                    <div className="flex-1 w-full space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Profile Details</h2>
+                          <p className="text-xs text-gray-500">Manage your public identity</p>
+                        </div>
                       </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <label className="flex flex-col gap-1.5">
-                          <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba]">Full Name</span>
-                          <input className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" type="text" defaultValue="Alex Morgan" />
+                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Full Name</span>
+                          <div className="relative">
+                            <input
+                              className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium"
+                              type="text"
+                              defaultValue="Alex Morgan"
+                            />
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-[16px]">edit</span>
+                          </div>
                         </label>
-                        <label className="flex flex-col gap-1.5">
-                          <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba]">Email Address</span>
-                          <input className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" type="email" defaultValue="alex@sniper.io" />
-                        </label>
-                        <label className="flex flex-col gap-1.5 md:col-span-2">
-                          <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba]">Job Title</span>
-                          <input className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" type="text" defaultValue="Senior Freelance Developer" />
+                        <label className="flex flex-col gap-1.5 opacity-60">
+                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Email Address</span>
+                          <div className="relative">
+                            <input
+                              className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 rounded-lg px-3 py-2.5 text-sm outline-none cursor-not-allowed font-medium"
+                              type="email"
+                              defaultValue="alex@proposal-sniper.io"
+                              disabled
+                            />
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-[16px]">lock</span>
+                          </div>
                         </label>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <section className={`${containerClasses} p-6 md:p-8 relative overflow-hidden group`}>
-                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[80px] group-hover:bg-primary/20 transition-all duration-700"></div>
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 relative z-10">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">rocket_launch</span>
-                        Subscription Plan
-                      </h2>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide">Sniper Pro</span>
-                        <span className="text-gray-500 dark:text-[#ab9cba] text-sm">Billed Monthly</span>
+                {/* Billing & Usage Card - Premium Gradient */}
+                <section className="relative overflow-hidden rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 md:p-8 group shadow-xl dark:shadow-2xl shadow-indigo-100 dark:shadow-indigo-900/10">
+                  <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-indigo-200/20 dark:bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-indigo-300/20 dark:group-hover:bg-indigo-600/20 transition-all duration-700"></div>
+
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-6">
+                    <div className="space-y-4 max-w-lg">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Current Plan</h2>
+                          <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-indigo-500/40 tracking-wide border border-indigo-400">FREE PLAN</span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                          You are currently on the <strong className="text-gray-900 dark:text-gray-300">Starter Tier</strong>. Upgrade to Pro to unlock unlimited generations, custom templates, and priority support.
+                        </p>
+                      </div>
+
+                      {/* Usage Bar */}
+                      <div className="bg-white/80 dark:bg-[#13151C]/50 rounded-lg p-4 border border-indigo-200 dark:border-indigo-500/20 shadow-sm dark:shadow-none">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-widest">Monthly Credits</span>
+                          <span className="text-xs font-mono text-gray-900 dark:text-white">4,250 / 5,000</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" style={{ width: '85%' }}></div>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2">Resets in 12 days</p>
                       </div>
                     </div>
-                    <div className="mt-4 md:mt-0 flex gap-3">
-                      <button className="px-4 py-2 bg-transparent border border-gray-200 dark:border-border-dark text-gray-700 dark:text-white rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">Billing History</button>
-                      <button className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black border border-transparent rounded-lg text-sm font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-lg shadow-black/10 dark:shadow-white/10">Manage Plan</button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                    <div className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-gray-500 dark:text-[#ab9cba] text-xs font-medium uppercase tracking-wider">Proposals Generated</p>
-                        <span className="material-symbols-outlined text-primary/50 text-[20px]">edit_document</span>
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">45</span>
-                        <span className="text-sm text-gray-500 dark:text-[#ab9cba] mb-1">/ 50 limit</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-[#302839] h-1.5 rounded-full mt-3 overflow-hidden">
-                        <div className="bg-primary h-full rounded-full" style={{ width: '90%' }}></div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-gray-500 dark:text-[#ab9cba] text-xs font-medium uppercase tracking-wider">Templates</p>
-                        <span className="material-symbols-outlined text-primary/50 text-[20px]">layers</span>
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">12</span>
-                        <span className="text-sm text-gray-500 dark:text-[#ab9cba] mb-1">active</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-[#302839] h-1.5 rounded-full mt-3 overflow-hidden">
-                        <div className="bg-indigo-400 h-full rounded-full" style={{ width: '45%' }}></div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-gray-500 dark:text-[#ab9cba] text-xs font-medium uppercase tracking-wider">Next Billing</p>
-                        <span className="material-symbols-outlined text-primary/50 text-[20px]">calendar_month</span>
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">Oct 24</span>
-                        <span className="text-sm text-gray-500 dark:text-[#ab9cba] mb-1">2023</span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-3 text-xs text-green-600 dark:text-green-400">
-                        <span className="material-symbols-outlined text-[14px]">check</span>
-                        Auto-renew active
-                      </div>
+
+                    {/* Action */}
+                    <div className="flex flex-col items-center gap-3 min-w-[200px]">
+                      <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                        <Crown size={18} />
+                        UPGRADE TO PRO
+                      </button>
+                      <p className="text-[10px] text-gray-500">Starting at $19/mo</p>
                     </div>
                   </div>
                 </section>
@@ -339,7 +331,7 @@ const SettingsPage = () => {
 
                 {/* Right Column: Context Extractor (Span 8) */}
                 <div className="col-span-12 lg:col-span-8 h-full">
-                  <section className={`${containerClasses} p-0 h-full flex flex-col overflow-hidden bg-[#0f111a] border-gray-800 shadow-2xl`}>
+                  <section className={`${containerClasses} p-0 h-full flex flex-col overflow-hidden bg-[#0f111a] border-gray-200 dark:border-gray-800 shadow-2xl`}>
 
                     {/* Header: Upload Control & Status */}
                     <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0f111a]">
@@ -441,7 +433,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Footer Actions - Always Visible */}
-        <div className="border-t border-[rgba(0,0,0,0.08)] dark:border-border-dark bg-white dark:bg-[#141118] p-4 md:px-10 flex items-center justify-end gap-4 z-20 transition-colors">
+        <div className="border-t border-gray-200 dark:border-border-dark bg-white dark:bg-[#141118] p-4 md:px-10 flex items-center justify-end gap-4 z-20 transition-colors">
           <button className="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white transition-colors">Discard</button>
           <button className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-bold shadow-lg shadow-primary/25 transition-all flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">save</span>
