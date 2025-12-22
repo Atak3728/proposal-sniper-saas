@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { Home, History, LayoutTemplate, Settings, ChevronLeft, ChevronRight, HelpCircle, Crown } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -111,35 +112,49 @@ const Sidebar = () => {
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
 
-        {/* Upgrade / Credits Box */}
+        {/* User / Auth Section */}
         <div className={clsx(
           "bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 transition-all duration-300 overflow-hidden relative group",
           isCollapsed ? "w-12 h-12 p-0 flex items-center justify-center cursor-pointer hover:bg-primary/10 hover:border-primary/30" : "w-full px-4 py-4"
         )}
         >
-          {isCollapsed ? (
-            <div className="relative">
-              <Crown size={20} className="text-gray-400 group-hover:text-primary transition-colors" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+          <SignedIn>
+            <div className={clsx("flex items-center gap-3", isCollapsed ? "justify-center" : "")}>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-8 h-8",
+                    userButtonTrigger: "focus:shadow-none"
+                  }
+                }}
+                showName={!isCollapsed}
+              />
+              {!isCollapsed && (
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                    My Account
+                  </span>
+                  <span className="text-[10px] text-gray-500 truncate">Manage Subscription</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Credits</span>
-                <span className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded">PRO</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-primary h-full w-[85%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-              </div>
-              <div className="flex justify-between items-center text-[10px] text-gray-400 dark:text-gray-500">
-                <span>4,250 / 5,000 words</span>
-              </div>
-              <button className="w-full mt-1 bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_auto] hover:bg-right transition-all duration-500 text-white py-2 rounded-lg shadow-lg shadow-primary/25 text-xs font-bold flex items-center justify-center gap-2">
-                <Crown size={14} />
-                UPGRADE
-              </button>
-            </div>
-          )}
+          </SignedIn>
+          <SignedOut>
+            {isCollapsed ? (
+              <SignInButton mode="modal">
+                <button className="flex items-center justify-center w-full h-full text-gray-500 hover:text-primary">
+                  <span className="material-symbols-outlined text-[20px]">login</span>
+                </button>
+              </SignInButton>
+            ) : (
+              <SignInButton mode="modal">
+                <button className="w-full bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_auto] hover:bg-right transition-all duration-500 text-white py-2 rounded-lg shadow-lg shadow-primary/25 text-xs font-bold flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-[16px]">login</span>
+                  SIGN IN
+                </button>
+              </SignInButton>
+            )}
+          </SignedOut>
         </div>
 
         {!isCollapsed && <div className="h-px bg-gray-100 dark:bg-white/5 my-1 w-full"></div>}

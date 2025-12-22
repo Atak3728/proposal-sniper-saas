@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Crown } from "lucide-react";
+import { UserProfile, useUser } from "@clerk/nextjs";
 
 const SettingsPage = () => {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<'general' | 'brain'>('general');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -157,55 +159,8 @@ const SettingsPage = () => {
             {activeTab === 'general' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Profile Section */}
-                <section className={`${containerClasses} p-5 md:p-6 bg-white dark:bg-[#13151C] border-gray-200 dark:border-gray-800`}>
-                  <div className="flex flex-col md:flex-row gap-6 items-center">
-                    <div className="flex flex-col items-center gap-3 min-w-[100px]">
-                      <div className="relative group cursor-pointer">
-                        <div className="size-24 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-[#1c1f26] shadow-md dark:shadow-none">
-                          AM
-                        </div>
-                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="material-symbols-outlined text-white text-sm">photo_camera</span>
-                        </div>
-                      </div>
-                      <button className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors">Change Photo</button>
-                    </div>
-
-                    <div className="flex-1 w-full space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Profile Details</h2>
-                          <p className="text-xs text-gray-500">Manage your public identity</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="flex flex-col gap-1.5">
-                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Full Name</span>
-                          <div className="relative">
-                            <input
-                              className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium"
-                              type="text"
-                              defaultValue="Alex Morgan"
-                            />
-                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-[16px]">edit</span>
-                          </div>
-                        </label>
-                        <label className="flex flex-col gap-1.5 opacity-60">
-                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Email Address</span>
-                          <div className="relative">
-                            <input
-                              className="w-full bg-gray-50 dark:bg-[#1c1f26] border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 rounded-lg px-3 py-2.5 text-sm outline-none cursor-not-allowed font-medium"
-                              type="email"
-                              defaultValue="alex@proposal-sniper.io"
-                              disabled
-                            />
-                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-[16px]">lock</span>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                <section className={`${containerClasses} p-5 md:p-6 bg-white dark:bg-[#13151C] border-gray-200 dark:border-gray-800 flex justify-center`}>
+                  <UserProfile routing="hash" />
                 </section>
 
                 {/* Billing & Usage Card - Premium Gradient */}
@@ -220,7 +175,7 @@ const SettingsPage = () => {
                           <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-indigo-500/40 tracking-wide border border-indigo-400">FREE PLAN</span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                          You are currently on the <strong className="text-gray-900 dark:text-gray-300">Starter Tier</strong>. Upgrade to Pro to unlock unlimited generations, custom templates, and priority support.
+                          You are currently on the <strong className="text-gray-900 dark:text-gray-300">Starter Tier</strong>. Upgrade to Pro to unlock unlimited generations, custom templates, and priority support for {user?.firstName}.
                         </p>
                       </div>
 
@@ -248,18 +203,7 @@ const SettingsPage = () => {
                   </div>
                 </section>
 
-                <section className={`${containerClasses} p-5 md:p-6 flex items-center justify-between`}>
-                  <div>
-                    <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <span className="material-symbols-outlined text-red-500 dark:text-red-400 text-[20px]">logout</span>
-                      Sign Out
-                    </h2>
-                    <p className="text-gray-500 dark:text-[#ab9cba] text-xs mt-1">End your current session safely.</p>
-                  </div>
-                  <button className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-500/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    Logout
-                  </button>
-                </section>
+
               </div>
             )}
 

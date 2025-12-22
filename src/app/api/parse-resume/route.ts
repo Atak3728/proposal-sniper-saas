@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     console.log("Parsing PDF with pdf2json...");
 
     const resumeText = await new Promise<string>((resolve, reject) => {
-      const pdfParser = new PDFParser(null, 1); // 1 = Text content only
+      const pdfParser = new PDFParser(null, true); // true = Text content only
 
       pdfParser.on("pdfParser_dataError", (errData: any) => {
         console.error("PDF Parser Error:", errData.parserError);

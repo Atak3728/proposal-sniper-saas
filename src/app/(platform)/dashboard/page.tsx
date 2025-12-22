@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from "jspdf";
 import { FileText, Download, Clipboard, ChevronDown, Check } from 'lucide-react';
+import { useUser } from "@clerk/nextjs";
 import HistoryDrawer, { HistoryItem } from '@/components/HistoryDrawer';
 import SourceEditor from '@/app/components/SourceEditor';
 
 const DashboardPage = () => {
+  const { user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -209,7 +211,7 @@ const DashboardPage = () => {
       <header className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0f111a]/80 backdrop-blur-md z-20 flex-shrink-0 transition-colors duration-300">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
-            <h1 className="text-gray-900 dark:text-white text-lg font-bold leading-none tracking-tight">Workspace</h1>
+            <h1 className="text-gray-900 dark:text-white text-lg font-bold leading-none tracking-tight">Welcome, {user?.firstName}</h1>
             <p className="text-gray-500 text-[10px] font-medium pt-1">Drafting Proposal v2.4</p>
           </div>
 
@@ -241,8 +243,8 @@ const DashboardPage = () => {
                   key={t}
                   onClick={() => setTone(t)}
                   className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${tone === t
-                      ? 'bg-white dark:bg-[#2a2e38] text-primary shadow-sm border border-gray-200 dark:border-white/5'
-                      : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#2a2e38] text-primary shadow-sm border border-gray-200 dark:border-white/5'
+                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     }`}
                 >
                   {t}
@@ -256,8 +258,8 @@ const DashboardPage = () => {
           <button
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${isHistoryOpen
-                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+              ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+              : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
               }`}
             title="View History"
           >
