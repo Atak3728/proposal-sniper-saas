@@ -8,6 +8,7 @@ import { FileText, Download, Clipboard, ChevronDown, Check } from 'lucide-react'
 import { useUser } from "@clerk/nextjs";
 import HistoryDrawer, { HistoryItem } from '@/components/HistoryDrawer';
 import SourceEditor from '@/app/components/SourceEditor';
+import { saveProposal } from '@/actions/db-actions';
 
 const DashboardPage = () => {
   const { user } = useUser();
@@ -26,7 +27,6 @@ const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // History State
-  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Export State
@@ -76,38 +76,7 @@ const DashboardPage = () => {
     }
   }, [showToast]);
 
-  // Load History on Mount
-  useEffect(() => {
-    const savedHistory = localStorage.getItem('sniper_history');
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        setHistory(parsed);
-      } catch (e) {
-        console.error("Failed to parse history", e);
-      }
-    }
-  }, []);
 
-  // Save to History Helper
-  const saveToHistory = (sourceText: string, generatedText: string) => {
-    const newEntry: HistoryItem = {
-      id: Date.now().toString(),
-      sourceText: sourceText,
-      generatedText: generatedText,
-      timestamp: Date.now(),
-      preview: sourceText.slice(0, 60) + (sourceText.length > 60 ? '...' : '')
-    };
-
-    const updatedHistory = [newEntry, ...history].slice(0, 20); // Keep top 20
-    setHistory(updatedHistory);
-    localStorage.setItem('sniper_history', JSON.stringify(updatedHistory));
-  };
-
-  const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('sniper_history');
-  };
 
   const loadHistoryItem = (item: any) => {
     setPrompt(item.sourceText || item.prompt || "");
@@ -186,7 +155,11 @@ const DashboardPage = () => {
         setCompletion((prev) => prev + text);
       }
 
-      saveToHistory(prompt, fullContent);
+      // Save to DB
+      if (user?.id) {
+        await saveProposal(user.id, prompt, fullContent);
+      }
+
     } catch (error) {
       console.error("Generation failed", error);
     } finally {
@@ -424,9 +397,7 @@ const DashboardPage = () => {
       <HistoryDrawer
         open={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
-        history={history}
         onLoad={loadHistoryItem}
-        onClear={clearHistory}
       />
     </div>
   );

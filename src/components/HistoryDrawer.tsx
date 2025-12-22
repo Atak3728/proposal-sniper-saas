@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { X, Clock, ArrowRight } from 'lucide-react';
+import { useUser } from "@clerk/nextjs";
+import { getHistory } from '@/actions/db-actions';
 
+// Exporting interface so DashboardPage can import it if needed (or we can move types to a shared file)
 export interface HistoryItem {
-    id: string; // Changed to string as per request (UUID or timestamp string)
+    id: string;
+    sourceText: string;
+    generatedOutput: string; // Changed from generatedText to match DB schema return
+    createdAt: Date;
+    // We might construct preview/timestamp from the DB object
+}
+
+// Helper for display
+interface DisplayHistoryItem {
+    id: string;
     sourceText: string;
     generatedText: string;
     timestamp: number;
@@ -15,12 +27,44 @@ export interface HistoryItem {
 interface HistoryDrawerProps {
     open: boolean;
     onClose: () => void;
-    history: HistoryItem[];
-    onLoad: (item: HistoryItem) => void;
-    onClear: () => void;
+    onLoad: (item: { sourceText: string, generatedText: string }) => void;
 }
 
-const HistoryDrawer = ({ open, onClose, history, onLoad, onClear }: HistoryDrawerProps) => {
+const HistoryDrawer = ({ open, onClose, onLoad }: HistoryDrawerProps) => {
+    const { user } = useUser();
+    const [historyItems, setHistoryItems] = useState<DisplayHistoryItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch History when drawer opens or user changes
+    useEffect(() => {
+        if (open && user?.id) {
+            fetchHistory();
+        }
+    }, [open, user?.id]);
+
+    const fetchHistory = async () => {
+        if (!user?.id) return;
+
+        setIsLoading(true);
+        try {
+            const res = await getHistory(user.id);
+            if (res.success && res.data) {
+                // Map DB items to Display items
+                const mapped: DisplayHistoryItem[] = res.data.map((item: any) => ({
+                    id: item.id,
+                    sourceText: item.sourceText,
+                    generatedText: item.generatedOutput,
+                    timestamp: new Date(item.createdAt).getTime(),
+                    preview: item.sourceText.slice(0, 60) + (item.sourceText.length > 60 ? '...' : '')
+                }));
+                setHistoryItems(mapped);
+            }
+        } catch (error) {
+            console.error("Failed to fetch history", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Helper to format relative time
     const getRelativeTime = (timestamp: number) => {
@@ -74,12 +118,6 @@ const HistoryDrawer = ({ open, onClose, history, onLoad, onClear }: HistoryDrawe
                     </div>
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={onClear}
-                            className="text-xs font-semibold text-gray-500 hover:text-red-400 transition-colors uppercase tracking-wider"
-                        >
-                            Clear All
-                        </button>
-                        <button
                             onClick={onClose}
                             className="p-1 rounded-md text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
                         >
@@ -90,18 +128,25 @@ const HistoryDrawer = ({ open, onClose, history, onLoad, onClear }: HistoryDrawe
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-3">
-                    {history.length === 0 ? (
+                    {isLoading ? (
+                        // Skeleton Loading State
+                        <div className="flex flex-col gap-4 animate-pulse">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-24 bg-[#1c1f26] rounded-xl border border-gray-800" />
+                            ))}
+                        </div>
+                    ) : historyItems.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-48 text-gray-600">
                             <Clock size={32} className="opacity-20 mb-2" />
                             <p className="text-sm">No history yet</p>
                         </div>
                     ) : (
-                        history.map((item) => (
+                        historyItems.map((item) => (
                             <div
                                 key={item.id}
                                 className="group bg-[#1c1f26] border border-gray-800 hover:border-gray-700 hover:bg-[#252833] rounded-xl p-4 cursor-pointer transition-all duration-200 relative overflow-hidden hover:translate-x-1"
                                 onClick={() => {
-                                    onLoad(item);
+                                    onLoad({ sourceText: item.sourceText, generatedText: item.generatedText });
                                     onClose();
                                 }}
                             >
@@ -132,7 +177,7 @@ const HistoryDrawer = ({ open, onClose, history, onLoad, onClear }: HistoryDrawe
                 {/* Footer */}
                 <div className="p-4 border-t border-gray-800 bg-[#161821]">
                     <p className="text-[10px] text-center text-gray-600">
-                        History is stored locally on your device.
+                        History is stored securely in the db.
                     </p>
                 </div>
             </div>
