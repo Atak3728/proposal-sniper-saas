@@ -31,7 +31,13 @@ export const getCheckoutUrl = async (userId: string, userEmail: string) => {
                                 user_id: userId,
                                 user_email: userEmail
                             }
-                        }
+                        },
+
+                    // CHANGE THIS: Use 'product_options', NOT 'checkout_options'
+                        product_options: {
+                            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`
+                        }                       
+ 
                     },
                     relationships: {
                         store: {

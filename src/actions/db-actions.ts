@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 
 // --- Proposal History ---
 
@@ -68,6 +68,7 @@ export async function saveBio(userId: string, bio: string) {
 }
 
 export async function getBio(userId: string) {
+    noStore();
     try {
         const profile = await db.userProfile.findUnique({
             where: {

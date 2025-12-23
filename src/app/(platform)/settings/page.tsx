@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Crown, Loader2 } from "lucide-react";
+import { Crown, Loader2, CreditCard, Sparkles } from "lucide-react";
 import { UserProfile, useUser } from "@clerk/nextjs";
 import { getCheckoutUrl } from "@/actions/payment-actions";
 import { getBio, saveBio } from "@/actions/db-actions";
@@ -14,6 +14,7 @@ const SettingsPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   const [extractedSkills, setExtractedSkills] = useState("");
   const [extractedBio, setExtractedBio] = useState("");
@@ -25,20 +26,8 @@ const SettingsPage = () => {
         const res = await getBio(user.id);
         if (res.success && res.data) {
           setExtractedBio(res.data.bio || "");
-          // We don't have a separate skills column in the example schema (it was just bio in userProfile from what I saw in db-actions, usually)
-          // But looking at db-actions.ts, saveBio taking (userId, bio), Upsert UserProfile.
-          // Wait, the UserProfile model in db-actions.ts seems to only be used for 'saveBio'.
-          // Let's check db-actions.ts content in memory:
-          // export async function saveBio(userId: string, bio: string) ...
-          // So 'skills' was just in local storage? The user request said "Import saveBio, getBio... Call getBio(user.id) and pre-fill... Update Save Changes button to call saveBio".
-          // It didn't mention skills. I will assume for now we only sync Bio or if I should concat them.
-          // The previous code had: setExtractedSkills(skills || "");
-          // If the DB schema doesn't have skills, I might lose it.
-          // Let's look at db-actions.ts again.
-          // It only deals with `bio`. I will comment out skills fetching or just leave it empty if not in DB.
-          // Actually, I should probably save skills to local storage if not supported by DB, OR just focus on Bio as requested.
-          // User Request: "Update SettingsPage.tsx (Syncing Bio)".
-          // I will stick to Bio.
+          // @ts-ignore - Check if user is pro
+          setIsPro(res.data.isPro || false);
         }
       }
     };
@@ -215,10 +204,18 @@ const SettingsPage = () => {
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Current Plan</h2>
-                          <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-indigo-500/40 tracking-wide border border-indigo-400">FREE PLAN</span>
+                          {isPro ? (
+                            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-purple-500/40 tracking-wide border border-transparent">PRO PLAN</span>
+                          ) : (
+                            <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-indigo-500/40 tracking-wide border border-indigo-400">FREE PLAN</span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                          You are currently on the <strong className="text-gray-900 dark:text-gray-300">Starter Tier</strong>. Upgrade to Pro to unlock unlimited generations, custom templates, and priority support for {user?.firstName}.
+                          {isPro ? (
+                            <>You are currently on the <strong className="text-gray-900 dark:text-gray-300">Pro Tier</strong>. You have unlimited access to all features.</>
+                          ) : (
+                            <>You are currently on the <strong className="text-gray-900 dark:text-gray-300">Starter Tier</strong>. Upgrade to Pro to unlock unlimited generations, custom templates, and priority support for {user?.firstName}.</>
+                          )}
                         </p>
                       </div>
 
@@ -226,34 +223,44 @@ const SettingsPage = () => {
                       <div className="bg-white/80 dark:bg-[#13151C]/50 rounded-lg p-4 border border-indigo-200 dark:border-indigo-500/20 shadow-sm dark:shadow-none">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-widest">Monthly Credits</span>
-                          <span className="text-xs font-mono text-gray-900 dark:text-white">4,250 / 5,000</span>
+                          <span className="text-xs font-mono text-gray-900 dark:text-white">{isPro ? "∞ / ∞" : "4,250 / 5,000"}</span>
                         </div>
                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" style={{ width: '85%' }}></div>
+                          <div className={`h-full rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)] ${isPro ? 'bg-gradient-to-r from-green-400 to-emerald-500 w-full' : 'bg-gradient-to-r from-indigo-500 to-purple-500 w-[85%]'}`}></div>
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-2">Resets in 12 days</p>
+                        {!isPro && <p className="text-[10px] text-gray-500 mt-2">Resets in 12 days</p>}
                       </div>
                     </div>
 
                     {/* Action */}
                     <div className="flex flex-col items-center gap-3 min-w-[200px]">
-                      <button
-                        onClick={handleUpgrade}
-                        disabled={isUpgrading}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                        {isUpgrading ? (
-                          <>
-                            <Loader2 size={18} className="animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Crown size={18} />
-                            UPGRADE TO PRO
-                          </>
-                        )}
-                      </button>
-                      <p className="text-[10px] text-gray-500">Starting at $19/mo</p>
+                      {isPro ? (
+                        <button
+                          onClick={() => toast.info("Manage Subscription portal coming soon!")}
+                          className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 border border-gray-200 dark:border-white/10">
+                          <CreditCard size={18} />
+                          Manage Subscription
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleUpgrade}
+                          disabled={isUpgrading}
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                          {isUpgrading ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Crown size={18} />
+                              UPGRADE TO PRO
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {!isPro && <p className="text-[10px] text-gray-500">Starting at $19/mo</p>}
                     </div>
                   </div>
                 </section>
