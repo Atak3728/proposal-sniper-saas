@@ -160,7 +160,7 @@ const HistoryDrawer = ({ open, onClose, onLoad }: HistoryDrawerProps) => {
                                 </div>
 
                                 <p className="text-xs text-gray-500 font-mono line-clamp-2 leading-relaxed font-jetbrains">
-                                    {item.sourceText}
+                                    {item.generatedText}
                                 </p>
 
                                 {/* Hover Actions */}

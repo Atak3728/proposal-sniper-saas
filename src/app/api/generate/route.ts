@@ -1,10 +1,12 @@
 import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
+import { currentUser } from '@clerk/nextjs/server';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { prompt, tone, userBio, userSkills } = await req.json();
+  const user = await currentUser();
 
   const fullPrompt = `
     ROLE: You are an expert freelance copywriter. You write professional, concise, and high-converting proposals.
@@ -16,8 +18,9 @@ export async function POST(req: Request) {
     STRICT FORMATTING RULES:
     1. NO Markdown (no **, no ##, no bullet points *). Write in clean, plain text paragraphs only.
     2. NO Placeholders (no [Insert Name], no [Date]). 
-    3. Sign off simply with "Sincerely," followed by a generic title like "A Dedicated Professional" if you don't know my name. 
-    4. Do not include a subject line.
+    3. Structure the proposal with clear paragraph breaks.
+    4. Sign off with the name: ${user?.firstName || 'A Pro Freelancer'}.
+    5. Do not include a subject line.
     
     STRATEGY:
     - If the Job Description is short, INFER the needs and write a confident pitch.

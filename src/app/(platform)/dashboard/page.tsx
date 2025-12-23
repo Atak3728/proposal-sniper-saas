@@ -60,11 +60,18 @@ const DashboardContent = () => {
   // Checks for Templates Drafts on Mount
   useEffect(() => {
     const draft = localStorage.getItem('proposal_draft');
+    const outputDraft = localStorage.getItem('proposal_output_draft');
+
     if (draft) {
       setPrompt(draft);
       setToastMessage('✨ Template Loaded');
       setShowToast(true);
       localStorage.removeItem('proposal_draft');
+    }
+
+    if (outputDraft) {
+      setCompletion(outputDraft);
+      localStorage.removeItem('proposal_output_draft');
     }
   }, []);
 
@@ -368,7 +375,7 @@ const DashboardContent = () => {
 
           {/* Output Area */}
           <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-white dark:bg-[#13151C] transition-colors duration-300">
-            <div className="prose prose-sm max-w-none dark:prose-invert font-medium text-gray-700 dark:text-gray-300 leading-7">
+            <div className="prose prose-sm max-w-none dark:prose-invert font-medium text-gray-700 dark:text-gray-300 leading-7 whitespace-pre-wrap">
               {isLoading && !completion ? (
                 <div className="flex items-center gap-3 animate-pulse text-gray-400 dark:text-gray-500 py-4">
                   <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce"></div>

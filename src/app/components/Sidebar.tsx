@@ -146,7 +146,7 @@ const Sidebar = () => {
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'History', href: '#', icon: History, action: () => router.push('/dashboard?history=true') },
+    { name: 'History', href: '/history', icon: History },
     { name: 'Templates', href: '/templates', icon: LayoutTemplate },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
@@ -174,25 +174,7 @@ const Sidebar = () => {
         {navItems.map((item) => {
           const active = isActive(item.href) && item.href !== '#';
 
-          if (item.action) {
-            return (
-              <button
-                key={item.name}
-                onClick={item.action}
-                className={clsx(
-                  "flex items-center rounded-xl transition-all group relative",
-                  isCollapsed ? "justify-center w-12 h-12" : "gap-3 px-4 py-3 w-full",
-                  "text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 text-left"
-                )}
-                title={isCollapsed ? item.name : undefined}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
-                <span className={clsx("text-sm whitespace-nowrap overflow-hidden transition-all", isCollapsed ? "w-0 opacity-0 duration-0 hidden" : "w-auto opacity-100 duration-300 block")}>
-                  {item.name}
-                </span>
-              </button>
-            )
-          }
+
 
           return (
             <Link

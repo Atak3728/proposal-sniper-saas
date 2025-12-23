@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Zap, Building2, ArrowRight } from 'lucide-react';
+import { Briefcase, Zap, Building2, ArrowRight, UserPlus, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
 const TEMPLATES = [
@@ -88,6 +88,74 @@ With over [YEARS] years of experience, I have...
 I look forward to the possibility of working together.
 
 Sincerely,
+[MY_NAME]`
+    },
+    {
+        id: 'agency-retainer',
+        title: 'Agency Retainer',
+        description: 'Focus on monthly deliverables, reporting, and ROI. Perfect for long-term contracts.',
+        icon: Briefcase,
+        badge: 'Long-term',
+        color: 'text-purple-500 dark:text-purple-400',
+        bg: 'bg-purple-50 dark:bg-purple-500/10',
+        content: `// MONTHLY RETAINER PROPOSAL FOR [CLIENT_NAME]
+
+Hi [CLIENT_NAME],
+
+Following our chat, I’ve outlined a monthly retainer structure that ensures [GOAL] is met consistently without the hassle of project-based billing.
+
+// MONTHLY DELIVERABLES
+Every month, I will deliver:
+- [DELIVERABLE_1] (e.g., 4 SEO Articles)
+- [DELIVERABLE_2] (e.g., Weekly Social Media Scheduling)
+- Monthly ROI Report & Strategy Call
+
+// INVESTMENT
+Total Investment: [PRICE]/month
+
+This structure ensures you have a dedicated partner focused on your growth. Ready to get started?
+
+Best,
+[MY_NAME]`
+    },
+    {
+        id: 'follow-up',
+        title: 'Follow-Up',
+        description: 'Polite but firm bump to the top of their inbox.',
+        icon: Clock,
+        badge: 'Strategy',
+        color: 'text-orange-500 dark:text-orange-400',
+        bg: 'bg-orange-50 dark:bg-orange-500/10',
+        content: `// FOLLOW-UP EMAIL
+
+Hi [NAME],
+
+Bumping this to the top of your inbox in case it got buried.
+
+I’m excited about the possibility of working on [PROJECT_NAME] and would love to get your thoughts on the proposal I sent earlier.
+
+Do you have any questions I can answer?
+
+Best,
+[MY_NAME]`
+    },
+    {
+        id: 'linkedin-connect',
+        title: 'LinkedIn Connection',
+        description: 'Short note for connecting with potential leads without being spammy.',
+        icon: UserPlus,
+        badge: 'Networking',
+        color: 'text-blue-500 dark:text-blue-400',
+        bg: 'bg-blue-50 dark:bg-blue-500/10',
+        content: `// LINKEDIN CONNECTION REQUEST
+
+Hi [NAME],
+
+I’ve been following your work at [COMPANY] and love your recent post about [TOPIC].
+
+I work in [INDUSTRY] and would love to connect and keep up with your updates.
+
+Best,
 [MY_NAME]`
     }
 ];
