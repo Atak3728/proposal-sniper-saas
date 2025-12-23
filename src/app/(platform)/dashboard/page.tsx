@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from "jspdf";
@@ -10,7 +10,7 @@ import HistoryDrawer, { HistoryItem } from '@/components/HistoryDrawer';
 import SourceEditor from '@/app/components/SourceEditor';
 import { saveProposal } from '@/actions/db-actions';
 
-const DashboardPage = () => {
+const DashboardContent = () => {
   const { user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -403,4 +403,10 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
