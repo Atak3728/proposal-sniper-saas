@@ -1,12 +1,5 @@
 "use server";
 
-import { checkout, lemonSqueezySetup } from '@lemonsqueezy/lemonsqueezy.js';
-
-// Initialize Lemon Squeezy with the API key from environment variables
-lemonSqueezySetup({
-    apiKey: process.env.LEMONSQUEEZY_API_KEY!,
-});
-
 export const getCheckoutUrl = async (userId: string, userEmail: string) => {
     if (!userId) {
         throw new Error("User ID is required to create a checkout session.");
@@ -14,31 +7,58 @@ export const getCheckoutUrl = async (userId: string, userEmail: string) => {
 
     const storeId = process.env.LEMONSQUEEZY_STORE_ID;
     const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
+    const apiKey = process.env.LEMONSQUEEZY_API_KEY;
 
-    if (!storeId || !variantId) {
-        throw new Error("Missing Lemon Squeezy Store ID or Variant ID configuration.");
+    if (!storeId || !variantId || !apiKey) {
+        throw new Error("Missing Lemon Squeezy Store ID, Variant ID, or API Key configuration.");
     }
 
     try {
-        // Create a new checkout
-        const checkoutResult = await checkout({
-            storeId: storeId,
-            variantId: variantId,
-            checkoutData: {
-                email: userEmail,
-                custom: {
-                    userId: userId // CRITICAL: This allows us to map the webhook back to the user
+        const response = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/vnd.api+json',
+                'Accept': 'application/vnd.api+json'
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "checkouts",
+                    attributes: {
+                        checkout_data: {
+                            email: userEmail,
+                            custom: {
+                                user_id: userId,
+                                user_email: userEmail
+                            }
+                        }
+                    },
+                    relationships: {
+                        store: {
+                            data: {
+                                type: "stores",
+                                id: storeId
+                            }
+                        },
+                        variant: {
+                            data: {
+                                type: "variants",
+                                id: variantId
+                            }
+                        }
+                    }
                 }
-            }
+            })
         });
 
-        // Check for errors in the response
-        if (checkoutResult.error) {
-            console.error("Lemon Squeezy Checkout Error:", checkoutResult.error);
-            throw new Error(checkoutResult.error.message);
+        const result = await response.json();
+
+        if (result.errors) {
+            console.error("Lemon Squeezy Checkout API Error:", result.errors);
+            throw new Error(result.errors[0]?.detail || "Failed to create checkout session");
         }
 
-        const checkoutUrl = checkoutResult.data?.data?.attributes?.url;
+        const checkoutUrl = result.data?.attributes?.url;
 
         if (!checkoutUrl) {
             throw new Error("Failed to retrieve checkout URL from Lemon Squeezy response.");

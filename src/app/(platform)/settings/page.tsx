@@ -5,6 +5,7 @@ import { Crown, Loader2 } from "lucide-react";
 import { UserProfile, useUser } from "@clerk/nextjs";
 import { getCheckoutUrl } from "@/actions/payment-actions";
 import { getBio, saveBio } from "@/actions/db-actions";
+import { toast } from 'sonner';
 
 const SettingsPage = () => {
   const { user } = useUser();
@@ -130,7 +131,7 @@ const SettingsPage = () => {
       }
     } catch (error) {
       console.error("Upgrade failed:", error);
-      alert("Failed to start upgrade. Please try again.");
+      toast.error("Failed to start upgrade. Please try again.");
     } finally {
       setIsUpgrading(false);
     }

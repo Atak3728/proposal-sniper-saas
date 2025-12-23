@@ -4,11 +4,50 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { Home, History, LayoutTemplate, Settings, ChevronLeft, ChevronRight, HelpCircle, Crown, Loader2 } from 'lucide-react';
+import { Home, History, LayoutTemplate, Settings, ChevronLeft, ChevronRight, HelpCircle, Crown, Loader2, Sparkles } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { getCheckoutUrl } from '@/actions/payment-actions';
 import { toast } from 'sonner';
+
+const ProminentUpgradeButton = () => {
+  const { user } = useUser();
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const email = user.primaryEmailAddress?.emailAddress || '';
+      const checkoutUrl = await getCheckoutUrl(user.id, email);
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      }
+    } catch (error) {
+      console.error("Upgrade failed:", error);
+      toast.error("Failed to start upgrade. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleUpgrade}
+      disabled={loading}
+      className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white p-3 rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] transition-all group flex items-center justify-center gap-3 relative overflow-hidden mb-4"
+    >
+      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+      <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+        {loading ? <Loader2 size={18} className="animate-spin text-white" /> : <Sparkles size={18} className="text-white fill-white/20" />}
+      </div>
+      <div className="flex flex-col items-start">
+        <span className="text-xs font-bold tracking-wide">UPGRADE TO PRO</span>
+        <span className="text-[10px] text-white/80 font-medium">{loading ? 'Processing...' : 'Unlock full power'}</span>
+      </div>
+    </button>
+  );
+};
 
 const UpgradeButton = () => {
   const { user } = useUser();
@@ -159,6 +198,13 @@ const Sidebar = () => {
         </button>
 
         {/* User / Auth Section */}
+        {/* Prominent Upgrade Button - Only visible when expanded */}
+        {!isCollapsed && (
+          <div className="w-full px-4">
+            <ProminentUpgradeButton />
+          </div>
+        )}
+
         <div className={clsx(
           "bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 transition-all duration-300 overflow-hidden relative group",
           isCollapsed ? "w-12 h-12 p-0 flex items-center justify-center cursor-pointer hover:bg-primary/10 hover:border-primary/30" : "w-full px-4 py-4"
