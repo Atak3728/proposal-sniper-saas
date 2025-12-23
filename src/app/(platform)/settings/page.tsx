@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Crown } from "lucide-react";
+import { Crown, Loader2 } from "lucide-react";
 import { UserProfile, useUser } from "@clerk/nextjs";
+import { getCheckoutUrl } from "@/actions/payment-actions";
 import { getBio, saveBio } from "@/actions/db-actions";
 
 const SettingsPage = () => {
@@ -11,6 +12,7 @@ const SettingsPage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   const [extractedSkills, setExtractedSkills] = useState("");
   const [extractedBio, setExtractedBio] = useState("");
@@ -117,6 +119,23 @@ const SettingsPage = () => {
     fileInputRef.current?.click();
   };
 
+  const handleUpgrade = async () => {
+    if (!user) return;
+    setIsUpgrading(true);
+    try {
+      const email = user.primaryEmailAddress?.emailAddress || '';
+      const checkoutUrl = await getCheckoutUrl(user.id, email);
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      }
+    } catch (error) {
+      console.error("Upgrade failed:", error);
+      alert("Failed to start upgrade. Please try again.");
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden bg-gray-50 dark:bg-background-dark relative transition-colors duration-300">
       {/* Success Toast */}
@@ -217,9 +236,21 @@ const SettingsPage = () => {
 
                     {/* Action */}
                     <div className="flex flex-col items-center gap-3 min-w-[200px]">
-                      <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                        <Crown size={18} />
-                        UPGRADE TO PRO
+                      <button
+                        onClick={handleUpgrade}
+                        disabled={isUpgrading}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                        {isUpgrading ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Crown size={18} />
+                            UPGRADE TO PRO
+                          </>
+                        )}
                       </button>
                       <p className="text-[10px] text-gray-500">Starting at $19/mo</p>
                     </div>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { Home, History, LayoutTemplate, Settings, ChevronLeft, ChevronRight, HelpCircle, Crown } from 'lucide-react';
+import { Home, History, LayoutTemplate, Settings, ChevronLeft, ChevronRight, HelpCircle, Crown, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { getCheckoutUrl } from '@/actions/payment-actions';
@@ -19,7 +19,6 @@ const UpgradeButton = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const url = await getCheckoutUrl(user.id, user.id); // Using user.id as email placeholder if email not available or pass email if available
       // Correcting to use email from user object
       const email = user.primaryEmailAddress?.emailAddress || '';
       const checkoutUrl = await getCheckoutUrl(user.id, email);
@@ -40,7 +39,12 @@ const UpgradeButton = () => {
       disabled={loading}
       className="text-[10px] text-primary hover:text-primary/80 font-medium truncate text-left transition-colors flex items-center gap-1"
     >
-      {loading ? "Loading..." : (
+      {loading ? (
+        <>
+          <Loader2 size={10} className="animate-spin mb-0.5" />
+          <span>Processing...</span>
+        </>
+      ) : (
         <>
           <Crown size={10} className="mb-0.5" />
           <span>Upgrade to Pro</span>
