@@ -13,6 +13,7 @@
     "@ai-sdk/react": "^2.0.118",
     "@clerk/nextjs": "^6.36.5",
     "@clerk/themes": "^2.4.46",
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@types/jspdf": "^1.3.3",
     "ai": "^5.0.116",
     "clsx": "^2.1.1",
@@ -26,6 +27,7 @@
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
     "react-simple-code-editor": "^0.14.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.2.1"
   },
