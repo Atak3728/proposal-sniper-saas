@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getHistory } from "@/actions/db-actions";
+import { getHistory, deleteHistoryItem } from "@/actions/db-actions";
 import { useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import { Copy, RefreshCw, FileText, Calendar, MoreHorizontal, ArrowRight, Trash } from "lucide-react";
@@ -55,6 +55,25 @@ export default function HistoryPage() {
         localStorage.setItem('proposal_output_draft', generatedOutput);
         router.push('/dashboard');
         toast.info("Draft loaded into Dashboard.");
+        toast.info("Draft loaded into Dashboard.");
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!user?.id) return;
+
+        const deletePromise = async () => {
+            const res = await deleteHistoryItem(user.id, id);
+            if (!res.success) throw new Error(res.error);
+            // Optimistic update
+            setHistory(prev => prev.filter(item => item.id !== id));
+            router.refresh();
+        };
+
+        toast.promise(deletePromise(), {
+            loading: 'Deleting proposal...',
+            success: 'Proposal deleted permanently',
+            error: 'Failed to delete proposal'
+        });
     };
 
     if (loading) {
@@ -109,8 +128,12 @@ export default function HistoryPage() {
                                             <span>{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}</span>
                                         </div>
                                         <button
-                                            onClick={() => toast.info("Delete functionality coming soon!")}
-                                            className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(item.id);
+                                            }}
+                                            className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                                            title="Delete Proposal"
                                         >
                                             <Trash size={16} />
                                         </button>

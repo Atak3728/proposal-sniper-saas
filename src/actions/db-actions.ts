@@ -43,6 +43,22 @@ export async function getHistory(userId: string) {
     }
 }
 
+export async function deleteHistoryItem(userId: string, id: string) {
+    try {
+        await db.proposalHistory.delete({
+            where: {
+                id,
+                userId, // Security: Ensure deleting own record
+            },
+        });
+        revalidatePath("/history");
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting history item:", error);
+        return { success: false, error: "Failed to delete item" };
+    }
+}
+
 // --- User Profile (Brain Context) ---
 
 export async function saveBio(userId: string, bio: string) {
