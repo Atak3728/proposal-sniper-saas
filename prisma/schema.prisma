@@ -16,6 +16,7 @@ model UserProfile {
   bio       String?  @db.Text
   credits   Int      @default(3)
   isPro     Boolean  @default(false)
+  resumeProfile Json?
 }
 
 model ProposalHistory {

@@ -1,11 +1,31 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Crown, Loader2, CreditCard, Sparkles } from "lucide-react";
+import { Crown, Loader2, CreditCard, Sparkles, Briefcase, GraduationCap, User, Plus, Link as LinkIcon } from "lucide-react";
 import { UserProfile, useUser } from "@clerk/nextjs";
 import { getCheckoutUrl } from "@/actions/payment-actions";
-import { getBio, saveBio } from "@/actions/db-actions";
+import { getBio, saveUserProfile } from "@/actions/db-actions";
 import { toast } from 'sonner';
+
+interface ExperienceItem {
+  id: string;
+  title: string;
+  company: string;
+  date: string;
+  desc: string;
+}
+
+interface EducationItem {
+  id: string;
+  school: string;
+  degree: string;
+  date: string;
+}
+
+interface ResumeData {
+  experience: ExperienceItem[];
+  education: EducationItem[];
+}
 
 const SettingsPage = () => {
   const { user } = useUser();
@@ -19,6 +39,25 @@ const SettingsPage = () => {
   const [extractedSkills, setExtractedSkills] = useState("");
   const [extractedBio, setExtractedBio] = useState("");
 
+  const [resumeData, setResumeData] = useState<ResumeData>({
+    experience: [],
+    education: []
+  });
+
+  // Helper to safely parse resumeProfile from DB
+  const parseResumeProfile = (profileData: any) => {
+    if (!profileData) return;
+
+    // Skills are stored as string[] in DB but string in UI (extractedSkills)
+    if (Array.isArray(profileData.skills)) {
+      setExtractedSkills(profileData.skills.join(", "));
+    }
+
+    // Experience & Education
+    if (profileData.experience) setResumeData(prev => ({ ...prev, experience: profileData.experience }));
+    if (profileData.education) setResumeData(prev => ({ ...prev, education: profileData.education }));
+  };
+
   // Load from DB on Mount
   useEffect(() => {
     const fetchBio = async () => {
@@ -26,6 +65,11 @@ const SettingsPage = () => {
         const res = await getBio(user.id);
         if (res.success && res.data) {
           setExtractedBio(res.data.bio || "");
+          // @ts-ignore - resumeProfile exists after migration but types might lag
+          if (res.data.resumeProfile) {
+            // @ts-ignore
+            parseResumeProfile(res.data.resumeProfile);
+          }
           // @ts-ignore - Check if user is pro
           setIsPro(res.data.isPro || false);
         }
@@ -64,18 +108,33 @@ const SettingsPage = () => {
       }
 
       const data = await response.json();
-      setExtractedBio(data.bio);
-      setExtractedSkills(data.skills);
-      setExtractedBio(data.bio);
-      setExtractedSkills(data.skills);
 
-      if (user?.id) {
-        await saveBio(user.id, data.bio);
-      }
-      setShowToast(true); // Trigger success toast
+      // Map API response to State
+      setExtractedBio(data.professionalSummary || "");
+      setExtractedSkills(data.skills || "");
+
+      setResumeData(prev => ({
+        ...prev,
+        experience: data.workExperience?.map((item: any) => ({
+          id: crypto.randomUUID(),
+          title: item.jobTitle,
+          company: item.company,
+          date: item.dateRange,
+          desc: item.description
+        })) || [],
+        education: data.education?.map((item: any) => ({
+          id: crypto.randomUUID(),
+          school: item.school,
+          degree: item.degree,
+          date: item.year
+        })) || []
+      }));
+
+      toast.success("Resume imported successfully!");
+      setShowToast(true);
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Failed to analyze resume. Please try again.");
+      toast.error("Failed to analyze resume. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -107,6 +166,61 @@ const SettingsPage = () => {
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  const addExperience = () => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: [...prev.experience, { id: crypto.randomUUID(), title: "", company: "", date: "", desc: "" }]
+    }));
+  };
+
+  const updateExperience = (id: string, field: keyof ExperienceItem, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: prev.experience.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const removeExperience = (id: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: prev.experience.filter(item => item.id !== id)
+    }));
+  };
+
+  const addEducation = () => {
+    setResumeData(prev => ({
+      ...prev,
+      education: [...prev.education, { id: crypto.randomUUID(), school: "", degree: "", date: "" }]
+    }));
+  };
+
+  const updateEducation = (id: string, field: keyof EducationItem, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      education: prev.education.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const removeEducation = (id: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      education: prev.education.filter(item => item.id !== id)
+    }));
+  };
+
+  const handleSaveAll = async () => {
+    if (!user?.id) return;
+
+    const structuredData = {
+      skills: extractedSkills.split(",").map(s => s.trim()).filter(Boolean),
+      experience: resumeData.experience,
+      education: resumeData.education
+    };
+
+    await saveUserProfile(user.id, extractedBio, structuredData);
+    setShowToast(true);
   };
 
   const handleUpgrade = async () => {
@@ -269,9 +383,9 @@ const SettingsPage = () => {
               </div>
             )}
 
-            {/* TAB 2: AI Brain */}
+            {/* TAB 2: AI Brain - Premium Glass UI */}
             {activeTab === 'brain' && (
-              <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-280px)] min-h-[600px]">
+              <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 {/* 1. Global Font Import for JetBrains Mono */}
                 <style dangerouslySetInnerHTML={{
                   __html: `
@@ -279,160 +393,273 @@ const SettingsPage = () => {
                   .font-jetbrains { font-family: 'JetBrains Mono', monospace; }
                 `}} />
 
-                {/* Left Column: Core Settings (Span 4) */}
-                <div className="col-span-12 lg:col-span-4 h-full flex flex-col gap-6">
-                  <section className={`${containerClasses} p-6 h-full flex flex-col`}>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
-                      <span className="material-symbols-outlined text-primary">psychology</span>
-                      Core Settings
+                {/* Left Column: Sidebar (Tone, Skills, Links) (Span 4) */}
+                <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+
+                  {/* Identity & Tone */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl p-6 shadow-sm group hover:border-indigo-500/20 transition-all duration-500">
+                    <h2 className="text-xs font-bold text-gray-500 dark:text-indigo-300 flex items-center gap-3 mb-6 uppercase tracking-widest">
+                      <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+                        <User size={14} />
+                      </span>
+                      Persona
                     </h2>
+                    <label className="flex flex-col gap-3">
+                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 pl-1">Tone of Voice</span>
+                      <div className="relative">
+                        <select className="w-full appearance-none bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-lg px-4 py-3 text-sm focus:ring-0 focus:border-indigo-500/50 outline-none transition-all font-medium hover:bg-gray-100 dark:hover:bg-white/5">
+                          <option>Professional & Confident</option>
+                          <option>Friendly & Approachable</option>
+                          <option>Direct & Concise</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
+                      </div>
+                    </label>
+                  </section>
 
-                    <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                      <label className="flex flex-col gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Tone of Voice</span>
-                        <div className="relative">
-                          <select className="w-full appearance-none bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all font-medium">
-                            <option>Professional & Confident</option>
-                            <option>Friendly & Approachable</option>
-                            <option>Direct & Concise</option>
-                          </select>
-                          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
-                        </div>
-                      </label>
+                  {/* Skills */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl p-6 shadow-sm group hover:border-indigo-500/20 transition-all duration-500">
+                    <h2 className="text-xs font-bold text-gray-500 dark:text-indigo-300 flex items-center gap-3 mb-6 uppercase tracking-widest">
+                      <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+                        <Sparkles size={14} />
+                      </span>
+                      Core Skills
+                    </h2>
+                    <label className="flex flex-col gap-2">
+                      <textarea
+                        className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-lg px-4 py-3 text-sm focus:ring-0 focus:border-indigo-500/50 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium min-h-[140px] resize-y leading-relaxed hover:bg-gray-100 dark:hover:bg-white/5"
+                        placeholder="React, Node.js, TypeScript, UI/UX Design, Copywriting..."
+                        value={extractedSkills}
+                        onChange={(e) => setExtractedSkills(e.target.value)}
+                      />
+                      <p className="text-[10px] text-gray-400 pl-1">Comma separated list of your best skills.</p>
+                    </label>
+                  </section>
 
-                      <label className="flex flex-col gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Top Skills</span>
+                  {/* Portfolio Links */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl p-6 shadow-sm group hover:border-indigo-500/20 transition-all duration-500">
+                    <h2 className="text-xs font-bold text-gray-500 dark:text-indigo-300 flex items-center gap-3 mb-6 uppercase tracking-widest">
+                      <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+                        <LinkIcon size={14} />
+                      </span>
+                      Online Presence
+                    </h2>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-3 py-2 focus-within:bg-gray-100 dark:focus-within:bg-black/40 focus-within:border-indigo-500/50 transition-all">
+                        <span className="material-symbols-outlined text-gray-400 text-[18px]">link</span>
                         <input
-                          className="bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium"
-                          type="text"
-                          placeholder="React, Node, Copywriting..."
-                          value={extractedSkills}
-                          onChange={(e) => setExtractedSkills(e.target.value)}
+                          className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                          type="url"
+                          placeholder="https://github.com/username"
                         />
-                        <p className="text-[10px] text-gray-400 ml-1">Comma separated list of your best skills.</p>
-                      </label>
-
-                      <div className="space-y-3">
-                        <span className="text-xs font-medium text-gray-500 dark:text-[#ab9cba] uppercase tracking-wider">Portfolio Links</span>
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg px-3 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-                          <span className="material-symbols-outlined text-gray-400 text-[18px]">link</span>
-                          <input
-                            className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
-                            type="url"
-                            placeholder="https://github.com/username"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#141118] border border-gray-200 dark:border-border-dark rounded-lg px-3 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-                          <span className="material-symbols-outlined text-gray-400 text-[18px]">language</span>
-                          <input
-                            className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
-                            type="url"
-                            placeholder="https://dribbble.com/username"
-                          />
-                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-3 py-2 focus-within:bg-gray-100 dark:focus-within:bg-black/40 focus-within:border-indigo-500/50 transition-all">
+                        <span className="material-symbols-outlined text-gray-400 text-[18px]">language</span>
+                        <input
+                          className="flex-1 bg-transparent text-gray-900 dark:text-white text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                          type="url"
+                          placeholder="https://dribbble.com/username"
+                        />
                       </div>
                     </div>
                   </section>
+
                 </div>
 
-                {/* Right Column: Context Extractor (Span 8) */}
-                <div className="col-span-12 lg:col-span-8 h-full">
-                  <section className={`${containerClasses} p-0 h-full flex flex-col overflow-hidden bg-[#0f111a] border-gray-200 dark:border-gray-800 shadow-2xl`}>
+                {/* Right Column: Main Stage (Summary, Exp, Edu) (Span 8) */}
+                <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
 
-                    {/* Header: Upload Control & Status */}
-                    <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0f111a]">
+                  {/* 1. Professional Summary (The Brain) */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl overflow-hidden shadow-sm flex flex-col min-h-[300px] relative group hover:border-indigo-500/20 transition-all duration-500">
+                    {/* Header */}
+                    <div className="bg-gray-50 dark:bg-white/[0.02] border-b border-gray-200 dark:border-white/5 p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-gray-500">terminal</span>
-                        <span className="text-sm font-medium text-gray-400">Context Extractor</span>
+                        <span className="text-yellow-500 animate-pulse">
+                          <Sparkles size={16} fill="currentColor" />
+                        </span>
+                        <h2 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest">Professional Summary</h2>
                       </div>
-
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={onFileChange}
-                      />
-
-                      <button
-                        onClick={triggerFileInput}
-                        disabled={isAnalyzing}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs text-gray-400 hover:text-white transition-all group"
-                      >
-                        {isAnalyzing ? (
-                          <>
-                            <span className="material-symbols-outlined text-[14px] animate-spin text-primary">progress_activity</span>
-                            <span className="text-primary">Extracting...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="material-symbols-outlined text-[14px] group-hover:text-primary transition-colors">upload_file</span>
-                            <span>Upload PDF Resume</span>
-                          </>
-                        )}
-                      </button>
+                      {/* Compact Upload Control */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={onFileChange}
+                          disabled={isAnalyzing}
+                        />
+                        <button
+                          onClick={triggerFileInput}
+                          className="text-[10px] text-indigo-400 font-bold hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 tracking-wide uppercase"
+                          disabled={isAnalyzing}
+                        >
+                          {isAnalyzing ? <><Loader2 size={10} className="animate-spin" /> Extracting...</> : <><span className="material-symbols-outlined text-[12px]">upload_file</span> Import PDF</>}
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex-1 relative group w-full bg-[#0f111a]"
+                    {/* Editor */}
+                    <div className="flex-1 relative bg-[#0F1115]"
                       onDragOver={onDragOver}
                       onDragLeave={onDragLeave}
                       onDrop={onDrop}
                     >
-                      {/* Drag Overlay */}
                       {isDragging && (
-                        <div className="absolute inset-0 z-50 bg-primary/10 backdrop-blur-sm border-2 border-primary border-dashed m-4 rounded-xl flex items-center justify-center">
-                          <div className="flex flex-col items-center gap-2 animate-bounce">
-                            <span className="material-symbols-outlined text-primary text-4xl">cloud_upload</span>
-                            <span className="text-primary font-bold">Drop Resume to Extract</span>
+                        <div className="absolute inset-0 z-50 bg-indigo-500/20 backdrop-blur-sm flex items-center justify-center border-2 border-indigo-500 border-dashed m-2 rounded-lg">
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="material-symbols-outlined text-white text-3xl">cloud_upload</span>
+                            <span className="text-white font-bold tracking-wide">DROP TO EXTRACT</span>
                           </div>
                         </div>
                       )}
-
-                      {/* The Editor Input */}
                       <textarea
-                        className="w-full h-full bg-[#0f111a] text-[#6b7280] font-jetbrains text-sm p-6 outline-none resize-none leading-relaxed placeholder:text-gray-700 custom-scrollbar"
-                        placeholder={`// NO CONTEXT LOADED
-// Upload a PDF resume to initialize the neural extraction layer...
-// Or type manually to override context parameters.
-
-> Waiting for input...`}
+                        className="w-full h-full bg-transparent text-gray-300 font-jetbrains text-sm p-6 outline-none resize-none leading-relaxed placeholder:text-gray-700 custom-scrollbar selection:bg-indigo-500/30"
+                        placeholder={`// PROFESSIONAL SUMMARY
+// This content is the primary context for the AI.
+// Upload a resume to auto-fill, or write a strong summary here...`}
                         value={extractedBio}
                         onChange={(e) => setExtractedBio(e.target.value)}
                         spellCheck="false"
                       ></textarea>
 
-                      {/* Local Save Bio Button (Hidden by default, visible on hover) */}
-                      <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button
-                          onClick={async () => {
-                            if (user?.id) {
-                              await saveBio(user.id, extractedBio);
-                              setShowToast(true);
-                            }
-                          }}
-                          className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded shadow-lg shadow-primary/20 flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all border border-white/10"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">save</span>
-                          SAVE BIO TO MEMORY
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Status Footer Bar */}
-                    <div className="h-8 bg-[#0b0d12] border-t border-white/5 flex items-center justify-between px-4 text-[10px] text-gray-600 font-jetbrains select-none">
-                      <div className="flex items-center gap-4">
-                        <span>UTF-8</span>
-                        <span>{extractedBio.length} CHARS</span>
-                        <span className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${extractedBio ? 'bg-green-500' : 'bg-gray-600'}`}></span>
-                          {extractedBio ? 'ACTIVE' : 'IDLE'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>Ln {extractedBio.split('\n').length}, Col 1</span>
+                      {/* Manual Save Indicator (Optional) */}
+                      <div className="absolute bottom-3 right-3 text-[10px] text-gray-700 font-mono">
+                        {extractedBio.length} chars
                       </div>
                     </div>
                   </section>
+
+                  {/* 2. Work Experience */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl p-6 shadow-sm group hover:border-indigo-500/20 transition-all duration-500">
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="text-xs font-bold text-gray-500 dark:text-indigo-300 flex items-center gap-3 uppercase tracking-widest">
+                        <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+                          <Briefcase size={14} />
+                        </span>
+                        Work Experience
+                      </h2>
+                      <button onClick={addExperience} className="text-indigo-500 dark:text-indigo-400 text-[10px] font-bold bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 uppercase tracking-wide">
+                        <Plus size={12} /> Add Position
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {resumeData.experience.length === 0 ? (
+                        <div className="border border-dashed border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02] hover:bg-white/[0.04] transition-colors rounded-xl p-10 flex flex-col items-center justify-center text-gray-400 gap-3 cursor-pointer group/empty" onClick={addExperience}>
+                          <div className="p-3 rounded-full bg-gray-100 dark:bg-white/5 group-hover/empty:bg-white/10 transition-colors">
+                            <Briefcase size={20} className="opacity-40" />
+                          </div>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">No experience added yet</p>
+                        </div>
+                      ) : (
+                        resumeData.experience.map((exp) => (
+                          <div key={exp.id} className="bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl p-6 relative group transition-all hover:bg-white/[0.04] hover:border-white/10">
+                            <button onClick={() => removeExperience(exp.id)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-500/10 rounded-lg"><span className="material-symbols-outlined text-[18px]">delete</span></button>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Job Title</label>
+                                <input
+                                  value={exp.title}
+                                  onChange={(e) => updateExperience(exp.id, 'title', e.target.value)}
+                                  placeholder="e.g. Senior Frontend Engineer"
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all placeholder:font-normal"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Company</label>
+                                <input
+                                  value={exp.company}
+                                  onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                                  placeholder="e.g. Google"
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5 mb-4">
+                              <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Date Range</label>
+                              <input
+                                value={exp.date}
+                                onChange={(e) => updateExperience(exp.id, 'date', e.target.value)}
+                                placeholder="e.g. Jan 2022 - Present"
+                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-xs font-mono text-gray-600 dark:text-gray-300 outline-none focus:border-indigo-500/50 transition-all"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Description</label>
+                              <textarea
+                                value={exp.desc}
+                                onChange={(e) => updateExperience(exp.id, 'desc', e.target.value)}
+                                placeholder="Detailed description of your role, achievements, and tech stack..."
+                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-3 text-sm text-gray-700 dark:text-gray-300 outline-none focus:border-indigo-500/50 transition-all resize-y min-h-[100px] leading-relaxed"
+                              />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  {/* 3. Education */}
+                  <section className="bg-white dark:bg-white/5 dark:backdrop-blur-md border border-gray-200 dark:border-white/10 dark:shadow-2xl dark:shadow-black/50 rounded-xl p-6 shadow-sm group hover:border-indigo-500/20 transition-all duration-500">
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="text-xs font-bold text-gray-500 dark:text-indigo-300 flex items-center gap-3 uppercase tracking-widest">
+                        <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
+                          <GraduationCap size={14} />
+                        </span>
+                        Education
+                      </h2>
+                      <button onClick={addEducation} className="text-indigo-500 dark:text-indigo-400 text-[10px] font-bold bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 uppercase tracking-wide">
+                        <Plus size={12} /> Add Education
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {resumeData.education.length === 0 ? (
+                        <div className="border border-dashed border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02] hover:bg-white/[0.04] transition-colors rounded-xl p-8 flex flex-col items-center justify-center text-gray-400 gap-3 cursor-pointer group/empty" onClick={addEducation}>
+                          <div className="p-3 rounded-full bg-gray-100 dark:bg-white/5 group-hover/empty:bg-white/10 transition-colors">
+                            <GraduationCap size={20} className="opacity-40" />
+                          </div>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">No education added</p>
+                        </div>
+                      ) : (
+                        resumeData.education.map((edu) => (
+                          <div key={edu.id} className="bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl p-4 relative group flex flex-col md:flex-row gap-4 items-start md:items-center hover:bg-white/[0.04] hover:border-white/10 transition-all">
+                            <button onClick={() => removeEducation(edu.id)} className="absolute top-2 right-2 md:top-auto md:right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-500/10 rounded-lg"><span className="material-symbols-outlined text-[16px]">close</span></button>
+
+                            <div className="flex-1 w-full space-y-2">
+                              <input
+                                value={edu.school}
+                                onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                                placeholder="School / University"
+                                className="w-full bg-transparent text-sm font-bold text-gray-900 dark:text-white outline-none placeholder:text-gray-500"
+                              />
+                              <div className="flex gap-2">
+                                <input
+                                  value={edu.degree}
+                                  onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                                  placeholder="Degree / Certificate"
+                                  className="flex-1 bg-transparent text-xs text-gray-600 dark:text-gray-400 outline-none placeholder:text-gray-600"
+                                />
+                                <input
+                                  value={edu.date}
+                                  onChange={(e) => updateEducation(edu.id, 'date', e.target.value)}
+                                  placeholder="Year"
+                                  className="w-24 bg-transparent text-xs text-gray-500 outline-none placeholder:text-gray-700 text-right font-mono"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  {/* Spacer for bottom scrolling */}
+                  <div className="h-10"></div>
                 </div>
               </div>
             )}
@@ -444,12 +671,7 @@ const SettingsPage = () => {
         <div className="border-t border-gray-200 dark:border-border-dark bg-white dark:bg-[#141118] p-4 md:px-10 flex items-center justify-end gap-4 z-20 transition-colors">
           <button className="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-500 dark:text-[#ab9cba] hover:text-gray-900 dark:hover:text-white transition-colors">Discard</button>
           <button
-            onClick={async () => {
-              if (user?.id) {
-                await saveBio(user.id, extractedBio);
-                setShowToast(true);
-              }
-            }}
+            onClick={handleSaveAll}
             className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-bold shadow-lg shadow-primary/25 transition-all flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">save</span>
             Save Changes

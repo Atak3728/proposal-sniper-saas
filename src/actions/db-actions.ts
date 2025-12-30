@@ -61,25 +61,29 @@ export async function deleteHistoryItem(userId: string, id: string) {
 
 // --- User Profile (Brain Context) ---
 
-export async function saveBio(userId: string, bio: string) {
+export async function saveUserProfile(userId: string, bio: string, resumeProfile?: any) {
     try {
+        const dataToUpdate: any = { bio };
+        if (resumeProfile !== undefined) {
+            dataToUpdate.resumeProfile = resumeProfile;
+        }
+
         const profile = await db.userProfile.upsert({
             where: {
                 userId,
             },
-            update: {
-                bio,
-            },
+            update: dataToUpdate,
             create: {
                 userId,
                 bio,
+                resumeProfile: resumeProfile || undefined,
             },
         });
         revalidatePath("/settings");
         return { success: true, data: profile };
     } catch (error) {
-        console.error("Error saving bio:", error);
-        return { success: false, error: "Failed to save bio" };
+        console.error("Error saving user profile:", error);
+        return { success: false, error: "Failed to save user profile" };
     }
 }
 
