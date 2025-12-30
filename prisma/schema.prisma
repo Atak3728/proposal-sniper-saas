@@ -17,6 +17,7 @@ model UserProfile {
   credits   Int      @default(3)
   isPro     Boolean  @default(false)
   resumeProfile Json?
+  applications JobApplication[]
 }
 
 model ProposalHistory {
@@ -25,6 +26,28 @@ model ProposalHistory {
   sourceText      String   @db.Text
   generatedOutput String   @db.Text
   createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model JobApplication {
+  id              String   @id @default(cuid())
+  userId          String
+  // Relation to UserProfile
+  user            UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  companyName     String
+  jobTitle        String
+  jobDescription  String   @db.Text
+  status          String   @default("DRAFT") // DRAFT, APPLIED, INTERVIEWING, OFFER, REJECTED
+  
+  tailoredResume  Json?
+  coverLetter     String?  @db.Text
+  coldEmail       String?  @db.Text
+  linkedinMessage String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([userId])
 }

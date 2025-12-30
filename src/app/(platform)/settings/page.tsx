@@ -44,18 +44,56 @@ const SettingsPage = () => {
     education: []
   });
 
+  // Auto-resize textarea Component
+  const AutoResizeTextarea = ({ value, onChange, placeholder, className, minHeight, onBlur, spellCheck, ...props }: any) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Force height adjustment on every value change
+    useEffect(() => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.style.height = 'auto'; // Reset to calculate true scrollHeight
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }, [value]);
+
+    return (
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`${className} overflow-hidden resize-none`} // Hide scrollbar, disable manual resize
+        style={{ minHeight: minHeight || '80px' }}
+        onBlur={onBlur}
+        spellCheck={spellCheck}
+        {...props}
+      />
+    );
+  };
+
   // Helper to safely parse resumeProfile from DB
   const parseResumeProfile = (profileData: any) => {
     if (!profileData) return;
 
+    let profile = profileData;
+    if (typeof profileData === 'string') {
+      try {
+        profile = JSON.parse(profileData);
+      } catch (e) {
+        console.error("Failed to parse resumeProfile JSON", e);
+        return;
+      }
+    }
+
     // Skills are stored as string[] in DB but string in UI (extractedSkills)
-    if (Array.isArray(profileData.skills)) {
-      setExtractedSkills(profileData.skills.join(", "));
+    if (Array.isArray(profile.skills)) {
+      setExtractedSkills(profile.skills.join(", "));
     }
 
     // Experience & Education
-    if (profileData.experience) setResumeData(prev => ({ ...prev, experience: profileData.experience }));
-    if (profileData.education) setResumeData(prev => ({ ...prev, education: profileData.education }));
+    if (profile.experience) setResumeData(prev => ({ ...prev, experience: profile.experience }));
+    if (profile.education) setResumeData(prev => ({ ...prev, education: profile.education }));
   };
 
   // Load from DB on Mount
@@ -426,11 +464,12 @@ const SettingsPage = () => {
                       Core Skills
                     </h2>
                     <label className="flex flex-col gap-2">
-                      <textarea
-                        className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-lg px-4 py-3 text-sm focus:ring-0 focus:border-indigo-500/50 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium min-h-[140px] resize-y leading-relaxed hover:bg-gray-100 dark:hover:bg-white/5"
+                      <AutoResizeTextarea
+                        className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-indigo-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 outline-none transition-all duration-300 placeholder:text-gray-500 font-sans tracking-wide leading-loose hover:bg-gray-100 dark:hover:bg-white/5"
                         placeholder="React, Node.js, TypeScript, UI/UX Design, Copywriting..."
                         value={extractedSkills}
-                        onChange={(e) => setExtractedSkills(e.target.value)}
+                        onChange={(e: any) => setExtractedSkills(e.target.value)}
+                        minHeight="140px"
                       />
                       <p className="text-[10px] text-gray-400 pl-1">Comma separated list of your best skills.</p>
                     </label>
@@ -491,16 +530,16 @@ const SettingsPage = () => {
                         />
                         <button
                           onClick={triggerFileInput}
-                          className="text-[10px] text-indigo-400 font-bold hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 tracking-wide uppercase"
+                          className="bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 disabled:opacity-50 text-xs font-bold tracking-wide uppercase shadow-sm shadow-indigo-500/5"
                           disabled={isAnalyzing}
                         >
-                          {isAnalyzing ? <><Loader2 size={10} className="animate-spin" /> Extracting...</> : <><span className="material-symbols-outlined text-[12px]">upload_file</span> Import PDF</>}
+                          {isAnalyzing ? <><Loader2 size={12} className="animate-spin" /> Extracting...</> : <><span className="material-symbols-outlined text-[16px]">upload_file</span> Import PDF</>}
                         </button>
                       </div>
                     </div>
 
                     {/* Editor */}
-                    <div className="flex-1 relative bg-[#0F1115]"
+                    <div className="relative bg-[#0F1115]"
                       onDragOver={onDragOver}
                       onDragLeave={onDragLeave}
                       onDrop={onDrop}
@@ -513,18 +552,19 @@ const SettingsPage = () => {
                           </div>
                         </div>
                       )}
-                      <textarea
-                        className="w-full h-full bg-transparent text-gray-300 font-jetbrains text-sm p-6 outline-none resize-none leading-relaxed placeholder:text-gray-700 custom-scrollbar selection:bg-indigo-500/30"
-                        placeholder={`// PROFESSIONAL SUMMARY
-// This content is the primary context for the AI.
-// Upload a resume to auto-fill, or write a strong summary here...`}
+                      <AutoResizeTextarea
+                        className="w-full bg-transparent text-gray-900 dark:text-gray-100 font-sans text-base p-6 outline-none leading-relaxed placeholder:text-gray-500"
+                        placeholder={`Professional Summary
+This content is the primary context for the AI.
+Upload a resume to auto-fill, or write a strong summary here...`}
                         value={extractedBio}
-                        onChange={(e) => setExtractedBio(e.target.value)}
+                        onChange={(e: any) => setExtractedBio(e.target.value)}
                         spellCheck="false"
-                      ></textarea>
+                        minHeight="300px"
+                      />
 
                       {/* Manual Save Indicator (Optional) */}
-                      <div className="absolute bottom-3 right-3 text-[10px] text-gray-700 font-mono">
+                      <div className="absolute bottom-3 right-3 text-[10px] text-gray-500 font-mono">
                         {extractedBio.length} chars
                       </div>
                     </div>
@@ -559,21 +599,21 @@ const SettingsPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div className="space-y-1.5">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Job Title</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider ml-1">Job Title</label>
                                 <input
                                   value={exp.title}
                                   onChange={(e) => updateExperience(exp.id, 'title', e.target.value)}
                                   placeholder="e.g. Senior Frontend Engineer"
-                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all placeholder:font-normal"
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all duration-300 placeholder:font-normal"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Company</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider ml-1">Company</label>
                                 <input
                                   value={exp.company}
                                   onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
                                   placeholder="e.g. Google"
-                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all duration-300"
                                 />
                               </div>
                             </div>
@@ -584,17 +624,18 @@ const SettingsPage = () => {
                                 value={exp.date}
                                 onChange={(e) => updateExperience(exp.id, 'date', e.target.value)}
                                 placeholder="e.g. Jan 2022 - Present"
-                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-xs font-mono text-gray-600 dark:text-gray-300 outline-none focus:border-indigo-500/50 transition-all"
+                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-2.5 text-xs font-mono text-gray-600 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all duration-300"
                               />
                             </div>
 
                             <div className="space-y-1.5">
                               <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider ml-1">Description</label>
-                              <textarea
+                              <AutoResizeTextarea
                                 value={exp.desc}
-                                onChange={(e) => updateExperience(exp.id, 'desc', e.target.value)}
+                                onChange={(e: any) => updateExperience(exp.id, 'desc', e.target.value)}
                                 placeholder="Detailed description of your role, achievements, and tech stack..."
-                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-3 text-sm text-gray-700 dark:text-gray-300 outline-none focus:border-indigo-500/50 transition-all resize-y min-h-[100px] leading-relaxed"
+                                className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-lg px-4 py-3 text-sm text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all duration-300 leading-relaxed"
+                                minHeight="100px"
                               />
                             </div>
                           </div>
@@ -635,7 +676,7 @@ const SettingsPage = () => {
                                 value={edu.school}
                                 onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
                                 placeholder="School / University"
-                                className="w-full bg-transparent text-sm font-bold text-gray-900 dark:text-white outline-none placeholder:text-gray-500"
+                                className="w-full bg-transparent text-sm font-bold text-gray-900 dark:text-white outline-none placeholder:text-gray-500 focus:ring-0"
                               />
                               <div className="flex gap-2">
                                 <input
@@ -648,7 +689,7 @@ const SettingsPage = () => {
                                   value={edu.date}
                                   onChange={(e) => updateEducation(edu.id, 'date', e.target.value)}
                                   placeholder="Year"
-                                  className="w-24 bg-transparent text-xs text-gray-500 outline-none placeholder:text-gray-700 text-right font-mono"
+                                  className="w-24 bg-transparent text-xs text-gray-500 outline-none placeholder:text-gray-700 text-right font-mono focus:ring-0"
                                 />
                               </div>
                             </div>
