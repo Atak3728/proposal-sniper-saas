@@ -10,9 +10,11 @@ import { useUser } from '@clerk/nextjs';
 interface CoverLetterGeneratorProps {
     applicationId: string;
     initialData?: string;
+    companyName: string;
+    jobTitle: string;
 }
 
-export default function CoverLetterGenerator({ applicationId, initialData }: CoverLetterGeneratorProps) {
+export default function CoverLetterGenerator({ applicationId, initialData, companyName, jobTitle }: CoverLetterGeneratorProps) {
     const [letterText, setLetterText] = useState(initialData || "");
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -179,16 +181,9 @@ export default function CoverLetterGenerator({ applicationId, initialData }: Cov
                         <div className="flex-1 w-full overflow-y-auto flex justify-center pb-10 no-print-scrollbar">
                             <CoverLetterPreview
                                 content={letterText}
-                                companyName="" // These should effectively valid for generic preview unless application context is passed. 
-                                // Wait, I should pass them from props implicitly? 
-                                // The Preview component needs them. 
-                                // I'll update props to include these or fetch them. 
-                                // For now, I'll let the user fill or leave blank if unknown, 
-                                // BUT 'ApplicationWorkspace' has 'application' prop content.
-                                // I need to update CoverLetterGenerator to accept companyName and jobTitle.
-                                jobTitle=""
+                                companyName={companyName}
+                                jobTitle={jobTitle}
                             />
-                            {/* Correction: I need to update CoverLetterGenerator to accept companyName and jobTitle to pass to Preview. */}
                         </div>
 
                     </div>
