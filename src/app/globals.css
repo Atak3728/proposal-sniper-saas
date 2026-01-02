@@ -25,3 +25,25 @@
     font-size: 30px !important;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #resume-preview-container, #resume-preview-container * {
+    visibility: visible;
+  }
+  #resume-preview-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

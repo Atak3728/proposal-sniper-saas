@@ -11,20 +11,30 @@ export async function createApplication(data: {
     jobTitle: string;
     jobDescription: string;
 }) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };
     }
 
     try {
+        console.log("Creating application for user:", userId);
+        console.log("Data:", data);
+
         const application = await db.jobApplication.create({
             data: {
-                userId,
                 ...data,
                 status: "DRAFT", // Default status
+                user: {
+                    connectOrCreate: {
+                        where: { userId: userId },
+                        create: { userId: userId },
+                    },
+                },
             },
         });
+
+        console.log("Application created successfully:", application.id);
 
         revalidatePath("/dashboard"); // Assuming dashboard lists applications? Or a new page.
         // Also revalidate generic applications list if we have one
@@ -38,7 +48,7 @@ export async function createApplication(data: {
 }
 
 export async function getApplication(id: string) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };
@@ -63,18 +73,27 @@ export async function getApplication(id: string) {
     }
 }
 
-export async function getApplications() {
-    const { userId } = auth();
+export async function getApplications(query?: string) {
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };
     }
 
     try {
+        const where: any = {
+            userId,
+        };
+
+        if (query) {
+            where.OR = [
+                { companyName: { contains: query, mode: 'insensitive' } },
+                { jobTitle: { contains: query, mode: 'insensitive' } },
+            ];
+        }
+
         const applications = await db.jobApplication.findMany({
-            where: {
-                userId,
-            },
+            where,
             orderBy: {
                 updatedAt: "desc",
             },
@@ -87,7 +106,7 @@ export async function getApplications() {
 }
 
 export async function updateApplicationStatus(id: string, status: string) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };
@@ -110,8 +129,7 @@ export async function updateApplicationStatus(id: string, status: string) {
         }
 
         revalidatePath("/dashboard");
-        // If there's a detail page:
-        // revalidatePath(`/applications/${id}`);
+        revalidatePath(`/applications/${id}`);
 
         return { success: true };
     } catch (error) {
@@ -126,7 +144,7 @@ export async function saveGeneratedAssets(id: string, assets: {
     coldEmail?: string;
     linkedinMessage?: string;
 }) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };
@@ -154,7 +172,7 @@ export async function saveGeneratedAssets(id: string, assets: {
 }
 
 export async function deleteApplication(id: string) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         return { success: false, error: "Unauthorized" };

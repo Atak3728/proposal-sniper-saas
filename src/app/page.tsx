@@ -1,4 +1,5 @@
 import { ThemeToggle } from "../components/ui/ThemeToggle";
+import Link from "next/link";
 
 const LandingPage = () => {
   return (
@@ -16,16 +17,16 @@ const LandingPage = () => {
               <nav className="hidden md:flex items-center gap-8">
                 <a className="text-sm font-medium hover:text-primary transition-colors" href="#features">Features</a>
                 <a className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works">How it Works</a>
-                <a className="text-sm font-medium hover:text-primary transition-colors" href="/pricing">Pricing</a>
+                <Link className="text-sm font-medium hover:text-primary transition-colors" href="/pricing">Pricing</Link>
               </nav>
               <div className="flex items-center gap-4">
                 <ThemeToggle />
-                <button className="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-transparent border border-gray-300 dark:border-border-dark text-sm font-bold hover:bg-gray-100 dark:hover:bg-card-dark transition-colors">
+                <Link href="/dashboard" className="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-transparent border border-gray-300 dark:border-border-dark text-sm font-bold hover:bg-gray-100 dark:hover:bg-card-dark transition-colors">
                   Log In
-                </button>
-                <button className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-indigo-600 transition-colors">
+                </Link>
+                <Link href="/dashboard" className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-indigo-600 transition-colors">
                   Get Started
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -52,13 +53,13 @@ const LandingPage = () => {
                       </h2>
                     </div>
                     <div className="flex flex-wrap gap-4">
-                      <button className="flex h-12 items-center justify-center rounded-lg bg-primary px-6 text-white text-base font-bold shadow-lg shadow-primary/25 hover:bg-indigo-600 hover:scale-105 transition-all duration-200">
+                      <Link href="/dashboard" className="flex h-12 items-center justify-center rounded-lg bg-primary px-6 text-white text-base font-bold shadow-lg shadow-primary/25 hover:bg-indigo-600 hover:scale-105 transition-all duration-200">
                         Generate Proposal Now
-                      </button>
-                      <button className="flex h-12 items-center justify-center rounded-lg bg-white dark:bg-card-dark border border-gray-200 dark:border-border-dark px-6 text-slate-900 dark:text-white text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      </Link>
+                      <Link href="#how-it-works" className="flex h-12 items-center justify-center rounded-lg bg-white dark:bg-card-dark border border-gray-200 dark:border-border-dark px-6 text-slate-900 dark:text-white text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <span className="material-symbols-outlined mr-2 text-xl">play_circle</span>
                         View Demo
-                      </button>
+                      </Link>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500 font-medium">
                       <div className="flex -space-x-2">
@@ -251,12 +252,12 @@ const LandingPage = () => {
                 <h2 className="text-3xl md:text-4xl font-black text-white z-10">Ready to Land Your Dream Client?</h2>
                 <p className="text-slate-400 text-lg z-10">Join thousands of freelancers who are saving time and earning more with Proposal Sniper.</p>
                 <div className="flex flex-col sm:flex-row gap-4 w-full justify-center z-10 mt-4">
-                  <button className="flex min-w-[160px] items-center justify-center rounded-lg h-12 px-6 bg-primary text-white text-base font-bold shadow-lg shadow-primary/25 hover:bg-indigo-600 transition-colors">
+                  <Link href="/dashboard" className="flex min-w-[160px] items-center justify-center rounded-lg h-12 px-6 bg-primary text-white text-base font-bold shadow-lg shadow-primary/25 hover:bg-indigo-600 transition-colors">
                     Start For Free
-                  </button>
-                  <button className="flex min-w-[160px] items-center justify-center rounded-lg h-12 px-6 bg-transparent border border-border-dark text-white text-base font-bold hover:bg-border-dark transition-colors">
+                  </Link>
+                  <Link href="/pricing" className="flex min-w-[160px] items-center justify-center rounded-lg h-12 px-6 bg-transparent border border-border-dark text-white text-base font-bold hover:bg-border-dark transition-colors">
                     View Pricing
-                  </button>
+                  </Link>
                 </div>
                 <p className="text-xs text-slate-500 mt-2 z-10">No credit card required for trial.</p>
               </div>
@@ -275,7 +276,7 @@ const LandingPage = () => {
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-500">
               <a className="hover:text-primary transition-colors" href="#">Features</a>
-              <a className="hover:text-primary transition-colors" href="/pricing">Pricing</a>
+              <Link className="hover:text-primary transition-colors" href="/pricing">Pricing</Link>
               <a className="hover:text-primary transition-colors" href="#">Blog</a>
               <a className="hover:text-primary transition-colors" href="#">Terms</a>
               <a className="hover:text-primary transition-colors" href="#">Privacy</a>

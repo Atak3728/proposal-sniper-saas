@@ -45,6 +45,7 @@ model JobApplication {
   coverLetter     String?  @db.Text
   coldEmail       String?  @db.Text
   linkedinMessage String?  @db.Text
+  proposal        String?  @db.Text
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
