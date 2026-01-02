@@ -17,10 +17,10 @@ interface ApplicationWorkspaceProps {
         jobTitle: string;
         jobDescription: string;
         status: string;
-        tailoredResume?: any;
-        coldEmail?: string;
-        coverLetter?: string;
-        proposal?: string;
+        tailoredResume?: any | null;
+        coldEmail?: string | null;
+        coverLetter?: string | null;
+        proposal?: string | null;
         // Add other fields as needed
     };
 }
