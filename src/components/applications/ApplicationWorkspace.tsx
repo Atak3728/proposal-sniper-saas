@@ -128,7 +128,7 @@ export default function ApplicationWorkspace({ application }: ApplicationWorkspa
                                 <LegacyProposalGenerator
                                     initialJobDescription={application.jobDescription}
                                     variant="integrated"
-                                    initialContent={application.proposal}
+                                    initialContent={application.proposal ?? undefined}
                                     applicationId={application.id}
                                 />
                             </div>
@@ -138,7 +138,7 @@ export default function ApplicationWorkspace({ application }: ApplicationWorkspa
                             <div className="absolute inset-0 overflow-hidden">
                                 <ResumeTailor
                                     applicationId={application.id}
-                                    initialData={application.tailoredResume}
+                                    initialData={application.tailoredResume ?? undefined}
                                 />
                             </div>
                         )}
@@ -147,7 +147,7 @@ export default function ApplicationWorkspace({ application }: ApplicationWorkspa
                             <div className="absolute inset-0 overflow-hidden">
                                 <ColdEmailGenerator
                                     applicationId={application.id}
-                                    initialData={application.coldEmail}
+                                    initialData={application.coldEmail ?? undefined}
                                 />
                             </div>
                         )}
@@ -156,7 +156,7 @@ export default function ApplicationWorkspace({ application }: ApplicationWorkspa
                             <div className="absolute inset-0 overflow-hidden">
                                 <CoverLetterGenerator
                                     applicationId={application.id}
-                                    initialData={application.coverLetter}
+                                    initialData={application.coverLetter ?? undefined}
                                     companyName={application.companyName}
                                     jobTitle={application.jobTitle}
                                 />
